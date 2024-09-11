@@ -149,6 +149,8 @@
     <Text Include="Graphics Game Engine_Log.txt" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\..\Resources\simplePhong.frag" />
+    <None Include="..\..\..\..\Resources\simplePhong.vert" />
     <None Include="shaders\simpleTexture.frag" />
     <None Include="shaders\simpleTexture.vert" />
   </ItemGroup>
