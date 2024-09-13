@@ -113,10 +113,11 @@ struct SwapChainSupportDetails {
         };
     }
 
-struct BufferMemory {
-    VkBuffer bufferID;
-    VkDeviceMemory bufferMemoryID;
-};
+    struct BufferMemory {
+        VkBuffer bufferID;
+        VkDeviceMemory bufferMemoryID;
+        VkDeviceSize bufferMemoryLength;
+    };
 
 struct IndexedVertexBuffer {
     VkBuffer vertBufferID;
