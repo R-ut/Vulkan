@@ -44,7 +44,7 @@ bool VulkanRenderer::OnCreate(){
     createFramebuffers();
     Create2DTextureImage("./textures/mario_fire.png");
     LoadModelIndexed("./meshes/Mario.obj");
-    CreateGraphicsPipeline("./shaders/simpleTexture.vert.spv", "./shaders/simpleTexture.frag.spv");
+    CreateGraphicsPipeline("./shaders/simplePhong.vert.spv", "./shaders/simplePhong.frag.spv");
     createUniformBuffers();
     
     createDescriptorSets();
@@ -1199,6 +1199,7 @@ void VulkanRenderer::SetCameraUBO(const Matrix4& projection, const Matrix4& view
     cameraUBO.viewMatrix = view;
     cameraUBO.modelMatrix = model;
     cameraUBO.projectionMatrix[5] *= -1.0f;
+    cameraUBO.lightPos = Vec4(0.0f, 0.0f, 0.0f, 0.0f);
 }
 
 void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {

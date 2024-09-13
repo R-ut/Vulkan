@@ -132,6 +132,7 @@ struct CameraUBO { /// A UniformBufferObject
     Matrix4 projectionMatrix;
     Matrix4 viewMatrix;
     Matrix4 modelMatrix; /// This doesn't belong here. We'll fix it. 
+    Vec4 lightPos;
 };
 
 struct Sampler2D {
