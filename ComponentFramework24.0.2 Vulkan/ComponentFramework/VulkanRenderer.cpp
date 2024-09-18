@@ -45,7 +45,7 @@ bool VulkanRenderer::OnCreate(){
     Create2DTextureImage("./textures/mario_fire.png");
     LoadModelIndexed("./meshes/Mario.obj");
     CreateGraphicsPipeline("./shaders/simplePhong.vert.spv", "./shaders/simplePhong.frag.spv");
-    createUniformBuffers();
+    uniformBuffers = createUniformBuffers<CameraUBO>();
     
     createDescriptorSets();
     createCommandBuffers();
@@ -70,7 +70,7 @@ void VulkanRenderer::RecreateSwapChain() {
     CreateGraphicsPipeline("shaders/simpleTexture.vert.spv","shaders/simpleTexture.frag.spv");
     createDepthResources();
     createFramebuffers();
-    createUniformBuffers();
+     uniformBuffers = createUniformBuffers<CameraUBO>();
     createDescriptorPool();
     createDescriptorSets();
     createCommandBuffers();
@@ -964,16 +964,20 @@ void VulkanRenderer::createIndexBuffer(IndexedVertexBuffer &indexedBufferMemory,
     vkFreeMemory(device, stagingBuffer.bufferMemoryID, nullptr);
 }
 
-void VulkanRenderer::createUniformBuffers() {
-    VkDeviceSize bufferSize = sizeof(CameraUBO);
+template<class T>
+std::vector<BufferMemory>  VulkanRenderer::createUniformBuffers() {
 
-    uniformBuffers.resize(swapChainImages.size()); 
-
+    std::vector<BufferMemory> uniformBuffers;
+    VkDeviceSize bufferSize = sizeof(T);
     for (size_t i = 0; i < swapChainImages.size(); i++) {
+        BufferMemory uniformBufferData;
+        uniformBufferData.bufferMemoryLength = sizeof(T);
         createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
-            uniformBuffers[i].bufferID, uniformBuffers[i].bufferMemoryID);
+            uniformBufferData.bufferID, uniformBufferData.bufferMemoryID);
+        uniformBuffers.push_back(uniformBufferData);
     }
+    return uniformBuffers;
 }
 
 #define TOTAL_NUMBER_OF_DESCRIPTORS 2

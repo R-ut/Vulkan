@@ -119,6 +119,7 @@ struct SwapChainSupportDetails {
         VkDeviceSize bufferMemoryLength;
     };
 
+
 struct IndexedVertexBuffer {
     VkBuffer vertBufferID;
     VkDeviceMemory vertBufferMemoryID;
@@ -241,7 +242,8 @@ private: /// Member functions
 
     void createVertexBuffer(IndexedVertexBuffer &indexedVertexBuffer, const std::vector<Vertex> &vertices);
     void createIndexBuffer(IndexedVertexBuffer &indexedVertexBuffer, const std::vector<uint32_t> &indices);
-
+    template<class T>
+    std::vector<BufferMemory> createUniformBuffers();
     void createUniformBuffers();
     void createDescriptorPool();
     void createDescriptorSets();
