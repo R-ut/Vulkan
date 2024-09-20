@@ -211,7 +211,7 @@ private: /// Private member variables
     VkQueue graphicsQueue;
     VkQueue presentQueue;
     Sampler2D texture2D;
-    CameraUBO cameraUBO;
+    CameraUBO cameraUBOdata;
     IndexedVertexBuffer indexedVertexBuffer;
     std::vector<BufferMemory> uniformBuffers;
 

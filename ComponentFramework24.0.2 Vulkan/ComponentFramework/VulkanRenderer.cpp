@@ -211,6 +211,8 @@ void VulkanRenderer::cleanupSwapChain() {
 
     vkDestroySwapchainKHR(device, swapChain, nullptr);
 
+
+    //Destroy uniform buffers/camera buffer 
     for (size_t i = 0; i < swapChainImages.size(); i++) {
         vkDestroyBuffer(device, uniformBuffers[i].bufferID, nullptr);
         vkFreeMemory(device, uniformBuffers[i].bufferMemoryID, nullptr);
@@ -969,13 +971,14 @@ std::vector<BufferMemory>  VulkanRenderer::createUniformBuffers() {
 
     std::vector<BufferMemory> uniformBuffers;
     VkDeviceSize bufferSize = sizeof(T);
+    uniformBuffers.resize(swapChainImages.size());
+
+
     for (size_t i = 0; i < swapChainImages.size(); i++) {
-        BufferMemory uniformBufferData;
-        uniformBufferData.bufferMemoryLength = sizeof(T);
+        uniformBuffers[i].bufferMemoryLength = bufferSize;
         createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
-            uniformBufferData.bufferID, uniformBufferData.bufferMemoryID);
-        uniformBuffers.push_back(uniformBufferData);
+            uniformBuffers[i].bufferID, uniformBuffers[i].bufferMemoryID);
     }
     return uniformBuffers;
 }
@@ -1199,17 +1202,17 @@ void VulkanRenderer::createSyncObjects() {
 }
 
 void VulkanRenderer::SetCameraUBO(const Matrix4& projection, const Matrix4& view, const Matrix4& model) {
-    cameraUBO.projectionMatrix = projection;
-    cameraUBO.viewMatrix = view;
-    cameraUBO.modelMatrix = model;
-    cameraUBO.projectionMatrix[5] *= -1.0f;
-    cameraUBO.lightPos = Vec4(0.0f, 0.0f, 0.0f, 0.0f);
+    cameraUBOdata.projectionMatrix = projection;
+    cameraUBOdata.viewMatrix = view;
+    cameraUBOdata.modelMatrix = model;
+    cameraUBOdata.projectionMatrix[5] *= -1.0f;
+    cameraUBOdata.lightPos = Vec4(0.0f, 0.0f, 0.0f, 0.0f);
 }
 
 void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
     void* data;
     vkMapMemory(device, uniformBuffers[currentImage].bufferMemoryID, 0, sizeof(CameraUBO), 0, &data);
-    memcpy(data, &cameraUBO, sizeof(CameraUBO));
+    memcpy(data, &cameraUBOdata, sizeof(CameraUBO));
     vkUnmapMemory(device, uniformBuffers[currentImage].bufferMemoryID);
 }
 
