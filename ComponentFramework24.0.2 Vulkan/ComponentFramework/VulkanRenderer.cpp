@@ -46,7 +46,7 @@ bool VulkanRenderer::OnCreate(){
     LoadModelIndexed("./meshes/Mario.obj");
     CreateGraphicsPipeline("./shaders/simplePhong.vert.spv", "./shaders/simplePhong.frag.spv");
     uniformBuffers = createUniformBuffers<CameraUBO>();
-    
+    lightsUBOBuffers = createUniformBuffers<LightUBO>();
     createDescriptorSets();
     createCommandBuffers();
     createSyncObjects();
@@ -216,7 +216,13 @@ void VulkanRenderer::cleanupSwapChain() {
     for (size_t i = 0; i < swapChainImages.size(); i++) {
         vkDestroyBuffer(device, uniformBuffers[i].bufferID, nullptr);
         vkFreeMemory(device, uniformBuffers[i].bufferMemoryID, nullptr);
+        
+        vkDestroyBuffer(device, lightsUBOBuffers[i].bufferID, nullptr);
+        vkFreeMemory(device, lightsUBOBuffers[i].bufferMemoryID, nullptr);
     }
+
+    
+
     vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 }
 
@@ -983,13 +989,15 @@ std::vector<BufferMemory>  VulkanRenderer::createUniformBuffers() {
     return uniformBuffers;
 }
 
-#define TOTAL_NUMBER_OF_DESCRIPTORS 2
+#define TOTAL_NUMBER_OF_DESCRIPTORS 3
 void VulkanRenderer::createDescriptorPool() {
     std::array<VkDescriptorPoolSize, TOTAL_NUMBER_OF_DESCRIPTORS> poolSizes{};
     poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     poolSizes[0].descriptorCount = static_cast<uint32_t>(swapChainImages.size());
-    poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    poolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     poolSizes[1].descriptorCount = static_cast<uint32_t>(swapChainImages.size());
+    poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    poolSizes[2].descriptorCount = static_cast<uint32_t>(swapChainImages.size());
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -1017,6 +1025,7 @@ void VulkanRenderer::createDescriptorSets() {
     }
 
     for (size_t i = 0; i < swapChainImages.size(); i++) {
+        //add one more uniform buffer
         VkDescriptorBufferInfo bufferInfo{};
         bufferInfo.buffer = uniformBuffers[i].bufferID;
         bufferInfo.offset = 0;
@@ -1027,8 +1036,8 @@ void VulkanRenderer::createDescriptorSets() {
         imageInfo.imageView = texture2D.imageView;
         imageInfo.sampler = texture2D.sampler;
 
-        std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
-
+        std::array<VkWriteDescriptorSet, TOTAL_NUMBER_OF_DESCRIPTORS> descriptorWrites{};
+        //Bind another descriptor set to the same uniform buffer
         descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
         descriptorWrites[0].dstSet = descriptorSets[i];
         descriptorWrites[0].dstBinding = 0;
@@ -1201,13 +1210,15 @@ void VulkanRenderer::createSyncObjects() {
     }
 }
 
+
 void VulkanRenderer::SetCameraUBO(const Matrix4& projection, const Matrix4& view, const Matrix4& model) {
     cameraUBOdata.projectionMatrix = projection;
     cameraUBOdata.viewMatrix = view;
     cameraUBOdata.modelMatrix = model;
     cameraUBOdata.projectionMatrix[5] *= -1.0f;
-    cameraUBOdata.lightPos = Vec4(0.0f, 0.0f, 0.0f, 0.0f);
 }
+
+//TODO make a setLightUBO function
 
 void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
     void* data;

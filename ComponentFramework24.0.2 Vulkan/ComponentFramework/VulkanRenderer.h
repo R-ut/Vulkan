@@ -137,6 +137,13 @@ struct CameraUBO { /// A UniformBufferObject
     Vec4 lightPos;
 };
 
+struct LightUBO {
+    Vec4 pos;
+    Vec4 diffuse;
+    Vec4 specular;
+    Vec4 ambient;
+};
+
 struct Sampler2D {
     VkImage image;
     VkDeviceMemory imageDeviceMemory;
@@ -212,8 +219,11 @@ private: /// Private member variables
     VkQueue presentQueue;
     Sampler2D texture2D;
     CameraUBO cameraUBOdata;
+    LightUBO lightsUBOdata;
+
     IndexedVertexBuffer indexedVertexBuffer;
     std::vector<BufferMemory> uniformBuffers;
+    std::vector<BufferMemory> lightsUBOBuffers;
 
 private: /// Member functions
     bool hasStencilComponent(VkFormat format);
