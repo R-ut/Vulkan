@@ -144,6 +144,11 @@ struct LightUBO {
     Vec4 ambient;
 };
 
+struct ModelMatrixPushConstant {
+	Matrix4 modelMatrix;
+    Matrix4 normalMatrix;
+};
+
 struct Sampler2D {
     VkImage image;
     VkDeviceMemory imageDeviceMemory;
@@ -169,7 +174,8 @@ public: /// Member functions
     void Render();
     
 
-    void SetCameraUBO(const Matrix4& projection, const Matrix4& view, const Matrix4& model);
+    void SetCameraUBO(const Matrix4& projection, const Matrix4& view);
+    void SetPushConstModelMatrix(const Matrix4& modelMatrix_) ;
     void Create2DTextureImage(const char* texureFile);
     void CreateGraphicsPipeline(const char* vertFile, const char* fragFile);
     void LoadModelIndexed(const char* filename);
@@ -220,6 +226,7 @@ private: /// Private member variables
     Sampler2D texture2D;
     CameraUBO cameraUBOdata;
     LightUBO lightsUBOdata;
+    ModelMatrixPushConstant pushConstant;
 
     IndexedVertexBuffer indexedVertexBuffer;
     std::vector<BufferMemory> uniformBuffers;

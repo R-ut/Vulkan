@@ -53,6 +53,7 @@ void Scene0::HandleEvents(const SDL_Event& sdlEvent) {
 		}
 	}
 }
+
 void Scene0::Update(const float deltaTime) {
 	static float elapsedTime = 0.0f;
 	elapsedTime += deltaTime;
@@ -66,7 +67,8 @@ void Scene0::Render() const {
 	case RendererType::VULKAN:
 		VulkanRenderer* vRenderer;
 		vRenderer = dynamic_cast<VulkanRenderer*>(renderer);
-		vRenderer->SetCameraUBO(camera->GetProjectionMatrix(), camera->GetViewMatrix(), mariosModelMatrix);
+		vRenderer->SetCameraUBO(camera->GetProjectionMatrix(), camera->GetViewMatrix());
+		vRenderer->SetPushConstModelMatrix(mariosModelMatrix);
 		vRenderer->Render();
 		break;
 
