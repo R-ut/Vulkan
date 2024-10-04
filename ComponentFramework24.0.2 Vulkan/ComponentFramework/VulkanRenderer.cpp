@@ -1017,14 +1017,14 @@ void VulkanRenderer::createDescriptorSetLayout() {
     cameraLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
     VkDescriptorSetLayoutBinding lightsUboLayoutBinding{};
-    lightsUboLayoutBinding.binding = 2;
+    lightsUboLayoutBinding.binding = 1;
     lightsUboLayoutBinding.descriptorCount = 1;
     lightsUboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     lightsUboLayoutBinding.pImmutableSamplers = nullptr;
-    lightsUboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    lightsUboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT; //it was vertex instead of frag
 
     VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-    samplerLayoutBinding.binding = 1;
+    samplerLayoutBinding.binding = 2;
     samplerLayoutBinding.descriptorCount = 1;
     samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     samplerLayoutBinding.pImmutableSamplers = nullptr;

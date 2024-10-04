@@ -14,6 +14,8 @@ layout(binding = 0) uniform CameraUBO {
 layout(binding = 1) uniform GlobalLightingUBO {
     vec4 position;
     vec4 diffuse;
+	Vec4 specular;
+	vec4 ambient;
 } glights;
 
 layout(push_constant) uniform Push {
@@ -37,7 +39,7 @@ void main() {
 	vec3 vertPos = vec3(camera.viewMatrix * push.modelMatrix * vVertex); /// This is the position of the vertex from the origin
 	vec3 vertDir = normalize(vertPos);
 	eyeDir = -vertDir;
-	lightDir = normalize(vec3(glights.position) - vertPos); /// Create the light direction.
+	lightDir = normalize(vec3(glights.pos) - vertPos); /// Create the light direction.
 	
 	gl_Position =  camera.projectionMatrix * camera.viewMatrix * push.modelMatrix * vVertex; 
 }
