@@ -133,7 +133,7 @@ struct IndexedVertexBuffer {
 struct CameraUBO { /// A UniformBufferObject
     Matrix4 projectionMatrix;
     Matrix4 viewMatrix;
-    Matrix4 modelMatrix; /// This doesn't belong here. We'll fix it. 
+    //Matrix4 modelMatrix; /// This doesn't belong here. We'll fix it. 
     Vec4 lightPos;
 };
 
@@ -175,6 +175,8 @@ public: /// Member functions
     
 
     void SetCameraUBO(const Matrix4& projection, const Matrix4& view);
+    //Make a set lightsubo with all the values in it.
+    //U have a pic of it
     void SetPushConstModelMatrix(const Matrix4& modelMatrix_) ;
     void Create2DTextureImage(const char* texureFile);
     void CreateGraphicsPipeline(const char* vertFile, const char* fragFile);
@@ -229,6 +231,7 @@ private: /// Private member variables
     ModelMatrixPushConstant pushConstant;
 
     IndexedVertexBuffer indexedVertexBuffer;
+    //uniformBuffer is nothing but camera buffer
     std::vector<BufferMemory> uniformBuffers;
     std::vector<BufferMemory> lightsUBOBuffers;
 
@@ -240,7 +243,7 @@ private: /// Member functions
     void createSwapChain();
     void createImageViews();
     
-    void updateUniformBuffer(uint32_t currentImage);
+    //void updateUniformBuffer(uint32_t currentImage);
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
     void createRenderPass();
     void createDescriptorSetLayout();
@@ -261,6 +264,11 @@ private: /// Member functions
     void createIndexBuffer(IndexedVertexBuffer &indexedVertexBuffer, const std::vector<uint32_t> &indices);
     template<class T>
     std::vector<BufferMemory> createUniformBuffers();
+
+    template<class T>
+    void UpdateUniformBuffer(const T srcData, const BufferMemory &bufferMemory);
+
+
     void createUniformBuffers();
     void createDescriptorPool();
     void createDescriptorSets();

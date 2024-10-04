@@ -124,7 +124,8 @@ void VulkanRenderer::Render() {
         throw std::runtime_error("failed to acquire swap chain image!");
     }
 
-    updateUniformBuffer(imageIndex);
+    UpdateUniformBuffer<CameraUBO>(cameraUBOdata, uniformBuffers[imageIndex]);
+    UpdateUniformBuffer<LightUBO>(lightsUBOdata, lightsUBOBuffers[imageIndex]);
 
     if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
         vkWaitForFences(device, 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
@@ -649,6 +650,7 @@ void VulkanRenderer::createCommandPool() {
     VkCommandPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
     if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
         throw std::runtime_error("failed to create graphics command pool!");
@@ -976,6 +978,15 @@ std::vector<BufferMemory>  VulkanRenderer::createUniformBuffers() {
     return uniformBuffers;
 }
 
+template<class T>
+void VulkanRenderer::UpdateUniformBuffer(const T srcData, const BufferMemory& bufferMemory)
+{
+    void* data;
+    vkMapMemory(device, bufferMemory.bufferMemoryID, 0, sizeof(T), 0, &data);
+    memcpy(data, &srcData, bufferMemory.bufferMemoryLength);
+    vkUnmapMemory(device, bufferMemory.bufferMemoryID);
+}
+
 #define TOTAL_NUMBER_OF_DESCRIPTORS 3
 void VulkanRenderer::createDescriptorPool() {
     std::array<VkDescriptorPoolSize, TOTAL_NUMBER_OF_DESCRIPTORS> poolSizes{};
@@ -991,7 +1002,7 @@ void VulkanRenderer::createDescriptorPool() {
     poolInfo.poolSizeCount = TOTAL_NUMBER_OF_DESCRIPTORS;
     poolInfo.pPoolSizes = poolSizes.data();
     poolInfo.maxSets = static_cast<uint32_t>(swapChainImages.size());
-    poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
+    //poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT;
 
     if (vkCreateDescriptorPool(device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
         throw std::runtime_error("failed to create descriptor pool!");
@@ -1006,14 +1017,14 @@ void VulkanRenderer::createDescriptorSetLayout() {
     cameraLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
     VkDescriptorSetLayoutBinding lightsUboLayoutBinding{};
-    lightsUboLayoutBinding.binding = 1;
+    lightsUboLayoutBinding.binding = 2;
     lightsUboLayoutBinding.descriptorCount = 1;
     lightsUboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     lightsUboLayoutBinding.pImmutableSamplers = nullptr;
     lightsUboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
     VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-    samplerLayoutBinding.binding = 2;
+    samplerLayoutBinding.binding = 1;
     samplerLayoutBinding.descriptorCount = 1;
     samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     samplerLayoutBinding.pImmutableSamplers = nullptr;
@@ -1265,12 +1276,12 @@ void VulkanRenderer::SetPushConstModelMatrix(const Matrix4& modelMatrix_)
 
 //TODO make a setLightUBO function
 
-void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
-    void* data;
-    vkMapMemory(device, uniformBuffers[currentImage].bufferMemoryID, 0, sizeof(CameraUBO), 0, &data);
-    memcpy(data, &cameraUBOdata, sizeof(CameraUBO));
-    vkUnmapMemory(device, uniformBuffers[currentImage].bufferMemoryID);
-}
+//void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
+//    void* data;
+//    vkMapMemory(device, uniformBuffers[currentImage].bufferMemoryID, 0, sizeof(CameraUBO), 0, &data);
+//    memcpy(data, &cameraUBOdata, sizeof(CameraUBO));
+//    vkUnmapMemory(device, uniformBuffers[currentImage].bufferMemoryID);
+//}
 
 VkShaderModule VulkanRenderer::createShaderModule(const std::vector<char>& code) {
     VkShaderModuleCreateInfo createInfo{};
