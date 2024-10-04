@@ -45,11 +45,12 @@ bool VulkanRenderer::OnCreate(){
     createFramebuffers();
     Create2DTextureImage("./textures/mario_fire.png");
     LoadModelIndexed("./meshes/Mario.obj");
-    CreateGraphicsPipeline("./shaders/simplePhong.vert.spv", "./shaders/simplePhong.frag.spv");
+    CreateGraphicsPipeline("./shaders/phong.vert.spv", "./shaders/phong.frag.spv");
     uniformBuffers = createUniformBuffers<CameraUBO>();
     lightsUBOBuffers = createUniformBuffers<LightUBO>();
     createDescriptorSets();
     createCommandBuffers();
+    RecordCommandBuffer();
     createSyncObjects();
     return true;
 }
@@ -1178,6 +1179,11 @@ void VulkanRenderer::createCommandBuffers() {
         throw std::runtime_error("failed to allocate command buffers!");
     }
 
+}
+
+void VulkanRenderer::RecordCommandBuffer() {
+    vkDeviceWaitIdle(device); //works for today maynot be the best way
+
     for (size_t i = 0; i < commandBuffers.size(); i++) {
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -1209,6 +1215,7 @@ void VulkanRenderer::createCommandBuffers() {
         vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, vertexBuffers, offsets);
         vkCmdBindIndexBuffer(commandBuffers[i], indexedVertexBuffer.indexBufferID, 0, VK_INDEX_TYPE_UINT32);
         vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
+        vkCmdPushConstants(commandBuffers[i], pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(ModelMatrixPushConstant), &pushConstant);
         vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indexedVertexBuffer.indexBufferLength), 1, 0, 0, 0);
         vkCmdEndRenderPass(commandBuffers[i]);
 
@@ -1251,7 +1258,10 @@ void VulkanRenderer::SetCameraUBO(const Matrix4& projection, const Matrix4& view
 void VulkanRenderer::SetPushConstModelMatrix(const Matrix4& modelMatrix_) 
 {
     pushConstant.modelMatrix = modelMatrix_;
+
+    RecordCommandBuffer();
 }
+
 
 //TODO make a setLightUBO function
 
