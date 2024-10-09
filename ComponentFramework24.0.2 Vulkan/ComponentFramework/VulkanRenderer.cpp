@@ -1021,7 +1021,7 @@ void VulkanRenderer::createDescriptorSetLayout() {
     lightsUboLayoutBinding.descriptorCount = 1;
     lightsUboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     lightsUboLayoutBinding.pImmutableSamplers = nullptr;
-    lightsUboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT; //it was vertex instead of frag
+    lightsUboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT; // Allow usage in both vertex and fragment shaders //it was vertex instead of frag
 
     VkDescriptorSetLayoutBinding samplerLayoutBinding{};
     samplerLayoutBinding.binding = 2;
