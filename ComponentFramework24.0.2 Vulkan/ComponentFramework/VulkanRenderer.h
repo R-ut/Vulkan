@@ -56,68 +56,68 @@ struct SwapChainSupportDetails {
     std::vector<VkPresentModeKHR> presentModes;
 };
 
-    struct Vertex {
-        Vec3 pos;
-        Vec3 normal;
-        Vec2 texCoord;
+struct Vertex {
+    Vec3 pos;
+    Vec3 normal;
+    Vec2 texCoord;
 
-         /// Used in vertex deduplication
-        bool operator == (const Vertex& other) const {
-            return pos == other.pos && normal == other.normal && texCoord == other.texCoord;
-        }   
-
-
-        static VkVertexInputBindingDescription getBindingDescription() {
-            VkVertexInputBindingDescription bindingDescription{};
-            bindingDescription.binding = 0;
-            bindingDescription.stride = sizeof(Vertex);
-            bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-            return bindingDescription;
-        }
-
-        static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions() {
-            std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
-
-            attributeDescriptions[0].binding = 0;
-            attributeDescriptions[0].location = 0;
-            attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-            attributeDescriptions[0].offset = offsetof(Vertex, pos);
-
-            attributeDescriptions[1].binding = 0;
-            attributeDescriptions[1].location = 1;
-            attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-            attributeDescriptions[1].offset = offsetof(Vertex, normal);
-
-            attributeDescriptions[2].binding = 0;
-            attributeDescriptions[2].location = 2;
-            attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-            attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
-
-            return attributeDescriptions;
-        }
-       
-    }; /// End of struct Vertex
-
-
-    /// Generate a hash of a Vertex, used in vertex deduplication
-    /// Adding this to namespace std is called a namespace injection
-    namespace std {
-        template<> struct hash<Vertex> {
-            size_t operator()(Vertex const& vertex) const noexcept {
-                size_t hash1 = hash<Vec3>()(vertex.pos);
-                size_t hash2 = hash<Vec3>()(vertex.normal);
-                size_t hash3 = hash<Vec2>()(vertex.texCoord);
-                size_t result = ((hash1 ^ (hash2 << 1)) >> 1) ^ (hash3 << 1);
-                return result;
-            }
-        };
+    /// Used in vertex deduplication
+    bool operator == (const Vertex& other) const {
+        return pos == other.pos && normal == other.normal && texCoord == other.texCoord;
     }
 
-    struct BufferMemory {
-        VkBuffer bufferID;
-        VkDeviceMemory bufferMemoryID;
-        VkDeviceSize bufferMemoryLength;
+
+    static VkVertexInputBindingDescription getBindingDescription() {
+        VkVertexInputBindingDescription bindingDescription{};
+        bindingDescription.binding = 0;
+        bindingDescription.stride = sizeof(Vertex);
+        bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+        return bindingDescription;
+    }
+
+    static std::array<VkVertexInputAttributeDescription, 3> getAttributeDescriptions() {
+        std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
+
+        attributeDescriptions[0].binding = 0;
+        attributeDescriptions[0].location = 0;
+        attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+        attributeDescriptions[0].offset = offsetof(Vertex, pos);
+
+        attributeDescriptions[1].binding = 0;
+        attributeDescriptions[1].location = 1;
+        attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+        attributeDescriptions[1].offset = offsetof(Vertex, normal);
+
+        attributeDescriptions[2].binding = 0;
+        attributeDescriptions[2].location = 2;
+        attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
+        attributeDescriptions[2].offset = offsetof(Vertex, texCoord);
+
+        return attributeDescriptions;
+    }
+
+}; /// End of struct Vertex
+
+
+/// Generate a hash of a Vertex, used in vertex deduplication
+/// Adding this to namespace std is called a namespace injection
+namespace std {
+    template<> struct hash<Vertex> {
+        size_t operator()(Vertex const& vertex) const noexcept {
+            size_t hash1 = hash<Vec3>()(vertex.pos);
+            size_t hash2 = hash<Vec3>()(vertex.normal);
+            size_t hash3 = hash<Vec2>()(vertex.texCoord);
+            size_t result = ((hash1 ^ (hash2 << 1)) >> 1) ^ (hash3 << 1);
+            return result;
+        }
     };
+}
+
+struct BufferMemory {
+    VkBuffer bufferID;
+    VkDeviceMemory bufferMemoryID;
+    VkDeviceSize bufferMemoryLength;
+};
 
 
 struct IndexedVertexBuffer {
@@ -133,19 +133,20 @@ struct IndexedVertexBuffer {
 struct CameraUBO { /// A UniformBufferObject
     Matrix4 projectionMatrix;
     Matrix4 viewMatrix;
-    //Matrix4 modelMatrix; /// This doesn't belong here. We'll fix it. 
-    Vec4 lightPos;
 };
 
 struct LightUBO {
-    Vec4 pos;
-    Vec4 diffuse;
-    Vec4 specular;
+
+
+    Vec4 pos[3];
+    Vec4 diffuse[3];
+    Vec4 specular[3];
     Vec4 ambient;
+    //int numLights;
 };
 
 struct ModelMatrixPushConstant {
-	Matrix4 modelMatrix;
+    Matrix4 modelMatrix;
     Matrix4 normalMatrix;
 };
 
@@ -172,12 +173,13 @@ public: /// Member functions
     bool OnCreate();
     void OnDestroy();
     void Render();
-    
+
 
     void SetCameraUBO(const Matrix4& projection, const Matrix4& view);
     //Make a set lightsubo with all the values in it.
+    void SetLightsUBO(Vec4 pos_[], Vec4 diffuse_[], Vec4 specular_[], Vec4 ambient_);
     //U have a pic of it
-    void SetPushConstModelMatrix(const Matrix4& modelMatrix_) ;
+    void SetPushConstModelMatrix(const Matrix4& modelMatrix_);
     void Create2DTextureImage(const char* texureFile);
     void CreateGraphicsPipeline(const char* vertFile, const char* fragFile);
     void LoadModelIndexed(const char* filename);
@@ -200,8 +202,8 @@ private: /// Private member variables
     VkDescriptorSetLayout descriptorSetLayout;
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
-    
-   
+
+
     VkImage depthImage;
     VkDeviceMemory depthImageMemory;
     VkImageView depthImageView;
@@ -222,12 +224,12 @@ private: /// Private member variables
     std::vector<VkImageView> swapChainImageViews;
     std::vector<VkFramebuffer> swapChainFramebuffers;
 
-   
+
     VkQueue graphicsQueue;
     VkQueue presentQueue;
     Sampler2D texture2D;
     CameraUBO cameraUBOdata;
-    LightUBO lightsUBOdata;
+    LightUBO lightsUBOdatas;
     ModelMatrixPushConstant pushConstant;
 
     IndexedVertexBuffer indexedVertexBuffer;
@@ -242,31 +244,31 @@ private: /// Member functions
     void createLogicalDevice();
     void createSwapChain();
     void createImageViews();
-    
+
     //void updateUniformBuffer(uint32_t currentImage);
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
     void createRenderPass();
     void createDescriptorSetLayout();
-   
+
     void createFramebuffers();
     void createCommandPool();
     void createDepthResources();
-   
+
     void createTextureImageView();
     void createTextureSampler();
     void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
         VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
-   
+
     /// A helper function for createVertexBuffer()
     uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
-    void createVertexBuffer(IndexedVertexBuffer &indexedVertexBuffer, const std::vector<Vertex> &vertices);
-    void createIndexBuffer(IndexedVertexBuffer &indexedVertexBuffer, const std::vector<uint32_t> &indices);
+    void createVertexBuffer(IndexedVertexBuffer& indexedVertexBuffer, const std::vector<Vertex>& vertices);
+    void createIndexBuffer(IndexedVertexBuffer& indexedVertexBuffer, const std::vector<uint32_t>& indices);
     template<class T>
     std::vector<BufferMemory> createUniformBuffers();
 
     template<class T>
-    void UpdateUniformBuffer(const T srcData, const BufferMemory &bufferMemory);
+    void UpdateUniformBuffer(const T srcData, const BufferMemory& bufferMemory);
 
 
     void createUniformBuffers();
@@ -289,7 +291,7 @@ private: /// Member functions
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
     void setupDebugMessenger();
 
-    
+
 
     void pickPhysicalDevice();
     bool isDeviceSuitable(VkPhysicalDevice device);
@@ -306,8 +308,8 @@ private: /// Member functions
     VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
     SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
 
-    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, 
-            VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
+    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData);
     static std::vector<char> readFile(const std::string& filename);
 };
 #endif 

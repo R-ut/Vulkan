@@ -4,12 +4,12 @@
 #include "tiny_obj_loader.h"
 
 
-VulkanRenderer::VulkanRenderer(): /// Initialize all the variables
-    window(nullptr), instance(nullptr), debugMessenger(0), surface(0),commandPool(0),device(nullptr),graphicsPipeline(0),
-    windowWidth(0), windowHeight(0),presentQueue(0),graphicsQueue(nullptr),pipelineLayout(0), renderPass(0), swapChain(0),
-    swapChainExtent{},swapChainImageFormat{}, depthImage(0), depthImageMemory(0),depthImageView(0),descriptorPool(0) {   
-     
- }
+VulkanRenderer::VulkanRenderer() : /// Initialize all the variables
+    window(nullptr), instance(nullptr), debugMessenger(0), surface(0), commandPool(0), device(nullptr), graphicsPipeline(0),
+    windowWidth(0), windowHeight(0), presentQueue(0), graphicsQueue(nullptr), pipelineLayout(0), renderPass(0), swapChain(0),
+    swapChainExtent{}, swapChainImageFormat{}, depthImage(0), depthImageMemory(0), depthImageView(0), descriptorPool(0) {
+
+}
 
 VulkanRenderer::~VulkanRenderer() {
 
@@ -23,20 +23,20 @@ SDL_Window* VulkanRenderer::CreateWindow(std::string name_, int width_, int heig
     return window;
 }
 
-bool VulkanRenderer::OnCreate(){ 
+bool VulkanRenderer::OnCreate() {
     createInstance();
     setupDebugMessenger();
     if (!SDL_Vulkan_CreateSurface(window, instance, &surface)) {
         throw std::runtime_error("failed to create window");
     }
-    
+
     pickPhysicalDevice();
-    createLogicalDevice();  
-    createSwapChain(); 
+    createLogicalDevice();
+    createSwapChain();
     createImageViews();
     createRenderPass();
-   
-    
+
+
     createCommandPool();
     createDescriptorSetLayout();
     createDescriptorPool();
@@ -69,10 +69,11 @@ void VulkanRenderer::RecreateSwapChain() {
     createSwapChain();
     createImageViews();
     createRenderPass();
-    CreateGraphicsPipeline("shaders/simpleTexture.vert.spv","shaders/simpleTexture.frag.spv");
+    CreateGraphicsPipeline("shaders/simpleTexture.vert.spv", "shaders/simpleTexture.frag.spv");
     createDepthResources();
     createFramebuffers();
-     uniformBuffers = createUniformBuffers<CameraUBO>();
+    uniformBuffers = createUniformBuffers<CameraUBO>();
+    lightsUBOBuffers = createUniformBuffers<LightUBO>();
     createDescriptorPool();
     createDescriptorSets();
     createCommandBuffers();
@@ -118,14 +119,19 @@ void VulkanRenderer::OnDestroy() {
 void VulkanRenderer::Render() {
     vkWaitForFences(device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
     uint32_t imageIndex;
-    VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, 
+    VkResult result = vkAcquireNextImageKHR(device, swapChain, UINT64_MAX,
         imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
     if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error("failed to acquire swap chain image!");
     }
 
     UpdateUniformBuffer<CameraUBO>(cameraUBOdata, uniformBuffers[imageIndex]);
-    UpdateUniformBuffer<LightUBO>(lightsUBOdata, lightsUBOBuffers[imageIndex]);
+
+    // Set the number of lights, for example, to 4
+
+  // Update the position, diffuse, specular, ambient for each light
+    UpdateUniformBuffer<LightUBO>(lightsUBOdatas, lightsUBOBuffers[imageIndex]);
+
 
     if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
         vkWaitForFences(device, 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
@@ -168,7 +174,7 @@ void VulkanRenderer::Render() {
 
     result = vkQueuePresentKHR(presentQueue, &presentInfo);
 
-    
+
     if (result != VK_SUCCESS) {
         throw std::runtime_error("failed to present swap chain image!");
     }
@@ -181,7 +187,8 @@ VkResult VulkanRenderer::createDebugUtilsMessengerEXT(VkInstance instance, const
     if (func != nullptr) {
         VkResult result = func(instance, pCreateInfo, pAllocator, pDebugMessenger);
         return result;
-    } else {
+    }
+    else {
         return VK_ERROR_EXTENSION_NOT_PRESENT;
     }
 }
@@ -219,12 +226,12 @@ void VulkanRenderer::cleanupSwapChain() {
     for (size_t i = 0; i < swapChainImages.size(); i++) {
         vkDestroyBuffer(device, uniformBuffers[i].bufferID, nullptr);
         vkFreeMemory(device, uniformBuffers[i].bufferMemoryID, nullptr);
-        
+
         vkDestroyBuffer(device, lightsUBOBuffers[i].bufferID, nullptr);
         vkFreeMemory(device, lightsUBOBuffers[i].bufferMemoryID, nullptr);
     }
 
-    
+
 
     vkDestroyDescriptorPool(device, descriptorPool, nullptr);
 }
@@ -580,7 +587,7 @@ void VulkanRenderer::CreateGraphicsPipeline(const char* vertFile, const char* fr
 
     VkPushConstantRange range{};
     range.offset = 0;
-	range.size = sizeof(ModelMatrixPushConstant);
+    range.size = sizeof(ModelMatrixPushConstant);
     range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
 
@@ -589,7 +596,7 @@ void VulkanRenderer::CreateGraphicsPipeline(const char* vertFile, const char* fr
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
     pipelineLayoutInfo.pushConstantRangeCount = 1;
-	pipelineLayoutInfo.pPushConstantRanges = &range;
+    pipelineLayoutInfo.pPushConstantRanges = &range;
 
     if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
         throw std::runtime_error("failed to create pipeline layout!");
@@ -691,7 +698,7 @@ bool VulkanRenderer::hasStencilComponent(VkFormat format) {
 }
 
 void VulkanRenderer::Create2DTextureImage(const char* texureFile) {
-    
+
     SDL_Surface* image = IMG_Load(texureFile);
     VkDeviceSize imageSize = image->w * image->h * 4; /// RGBA only please
 
@@ -704,9 +711,9 @@ void VulkanRenderer::Create2DTextureImage(const char* texureFile) {
     memcpy(data, image->pixels, static_cast<size_t>(imageSize)); /// memcpy wants a 32 bit not a 64 bit int thus the type cast
     vkUnmapMemory(device, stagingBuffer.bufferMemoryID);
 
-  
-    createImage(image->w, image->h, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, 
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
+
+    createImage(image->w, image->h, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, texture2D.image, texture2D.imageDeviceMemory);
 
     transitionImageLayout(texture2D.image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
@@ -839,8 +846,8 @@ void VulkanRenderer::transitionImageLayout(VkImage image, VkFormat format, VkIma
         throw std::invalid_argument("unsupported layout transition!");
     }
 
-    vkCmdPipelineBarrier(commandBuffer,sourceStage, destinationStage,
-                        0, 0, nullptr, 0, nullptr, 1, &barrier);
+    vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage,
+        0, 0, nullptr, 0, nullptr, 1, &barrier);
 
     endSingleTimeCommands(commandBuffer);
 }
@@ -857,14 +864,14 @@ void VulkanRenderer::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t 
     region.imageSubresource.baseArrayLayer = 0;
     region.imageSubresource.layerCount = 1;
     region.imageOffset = { 0, 0, 0 };
-    region.imageExtent = {width, height, 1};
+    region.imageExtent = { width, height, 1 };
 
     vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
     endSingleTimeCommands(commandBuffer);
 }
 
 void VulkanRenderer::LoadModelIndexed(const char* filename) {
-   
+
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
 
@@ -889,10 +896,10 @@ void VulkanRenderer::LoadModelIndexed(const char* filename) {
                 attrib.vertices[3 * index.vertex_index + 2]
             };
 
-             vertex.normal = {
-                attrib.normals[3 * index.normal_index + 0],
-                attrib.normals[3 * index.normal_index + 1],
-                attrib.normals[3 * index.normal_index + 2]
+            vertex.normal = {
+               attrib.normals[3 * index.normal_index + 0],
+               attrib.normals[3 * index.normal_index + 1],
+               attrib.normals[3 * index.normal_index + 2]
             };
 
             vertex.texCoord = {
@@ -905,31 +912,31 @@ void VulkanRenderer::LoadModelIndexed(const char* filename) {
                 uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
                 vertices.push_back(vertex);
             }
-            
+
             indices.push_back(uniqueVertices[vertex]);
         }
     }
-    createVertexBuffer(indexedVertexBuffer,vertices);
-    createIndexBuffer(indexedVertexBuffer,indices);
+    createVertexBuffer(indexedVertexBuffer, vertices);
+    createIndexBuffer(indexedVertexBuffer, indices);
 }
 
-void VulkanRenderer::createVertexBuffer(IndexedVertexBuffer &indexedBufferMemory, const std::vector<Vertex> &vertices) {
+void VulkanRenderer::createVertexBuffer(IndexedVertexBuffer& indexedBufferMemory, const std::vector<Vertex>& vertices) {
     indexedBufferMemory.vertBufferLength = vertices.size();
 
     VkDeviceSize bufferSize = indexedBufferMemory.vertBufferLength * sizeof(Vertex);
     BufferMemory stagingBuffer;
-    
-                                                                                                                       
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
-                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
-                stagingBuffer.bufferID, stagingBuffer.bufferMemoryID);
+
+
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        stagingBuffer.bufferID, stagingBuffer.bufferMemoryID);
 
     void* data;
     vkMapMemory(device, stagingBuffer.bufferMemoryID, 0, bufferSize, 0, &data);
     memcpy(data, vertices.data(), bufferSize);
     vkUnmapMemory(device, stagingBuffer.bufferMemoryID);
 
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexedBufferMemory.vertBufferID, indexedBufferMemory.vertBufferMemoryID);
 
     copyBuffer(stagingBuffer.bufferID, indexedBufferMemory.vertBufferID, bufferSize);
@@ -938,13 +945,13 @@ void VulkanRenderer::createVertexBuffer(IndexedVertexBuffer &indexedBufferMemory
     vkFreeMemory(device, stagingBuffer.bufferMemoryID, nullptr);
 }
 
-void VulkanRenderer::createIndexBuffer(IndexedVertexBuffer &indexedBufferMemory, const std::vector<uint32_t> &indices) {
-   indexedBufferMemory.indexBufferLength = indices.size();
-   VkDeviceSize bufferSize = indexedBufferMemory.indexBufferLength * sizeof(uint32_t);
-   BufferMemory stagingBuffer{};
+void VulkanRenderer::createIndexBuffer(IndexedVertexBuffer& indexedBufferMemory, const std::vector<uint32_t>& indices) {
+    indexedBufferMemory.indexBufferLength = indices.size();
+    VkDeviceSize bufferSize = indexedBufferMemory.indexBufferLength * sizeof(uint32_t);
+    BufferMemory stagingBuffer{};
 
-   createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
         stagingBuffer.bufferID, stagingBuffer.bufferMemoryID);
 
     void* data;
@@ -952,7 +959,7 @@ void VulkanRenderer::createIndexBuffer(IndexedVertexBuffer &indexedBufferMemory,
     memcpy(data, indices.data(), bufferSize);
     vkUnmapMemory(device, stagingBuffer.bufferMemoryID);
 
-    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 
+    createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexedBufferMemory.indexBufferID, indexedBufferMemory.indexBufferMemoryID);
 
     copyBuffer(stagingBuffer.bufferID, indexedBufferMemory.indexBufferID, bufferSize);
@@ -971,8 +978,8 @@ std::vector<BufferMemory>  VulkanRenderer::createUniformBuffers() {
 
     for (size_t i = 0; i < swapChainImages.size(); i++) {
         uniformBuffers[i].bufferMemoryLength = bufferSize;
-        createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 
-            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+        createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
             uniformBuffers[i].bufferID, uniformBuffers[i].bufferMemoryID);
     }
     return uniformBuffers;
@@ -1266,15 +1273,25 @@ void VulkanRenderer::SetCameraUBO(const Matrix4& projection, const Matrix4& view
     //vulkan has fliped the y axis from opengl
 }
 
-void VulkanRenderer::SetPushConstModelMatrix(const Matrix4& modelMatrix_) 
+void VulkanRenderer::SetPushConstModelMatrix(const Matrix4& modelMatrix_)
 {
     pushConstant.modelMatrix = modelMatrix_;
-
+    pushConstant.normalMatrix = MMath::transpose(MMath::inverse(modelMatrix_));
+    std::memcpy(pushConstant.modelMatrix, &pushConstant.modelMatrix, sizeof(pushConstant.modelMatrix));
+    std::memcpy(pushConstant.normalMatrix, &pushConstant.normalMatrix, sizeof(pushConstant.normalMatrix));
     RecordCommandBuffer();
 }
 
 
 //TODO make a setLightUBO function
+void VulkanRenderer::SetLightsUBO(Vec4 pos_[], Vec4 diffuse_[], Vec4 specular_[], Vec4 ambient_) {
+    for (int i = 0; i < 3; ++i) {
+        lightsUBOdatas.pos[i] = pos_[i];        // Set light position
+        lightsUBOdatas.diffuse[i] = diffuse_[i];    // Set diffuse component
+        lightsUBOdatas.specular[i] = specular_[i];   // Set specular component
+
+    } lightsUBOdatas.ambient = ambient_;
+}
 
 //void VulkanRenderer::updateUniformBuffer(uint32_t currentImage) {
 //    void* data;
@@ -1418,7 +1435,7 @@ std::vector<const char*> VulkanRenderer::getRequiredExtensions() {
     if (!SDL_Vulkan_GetInstanceExtensions(window, &extensionCount, extensions.data()))
         throw std::runtime_error("failed to get required SDL extensions!");
 
-    if (enableValidationLayers){
+    if (enableValidationLayers) {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
     return extensions;
