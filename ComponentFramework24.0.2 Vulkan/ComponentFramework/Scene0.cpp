@@ -58,6 +58,7 @@ void Scene0::Update(const float deltaTime) {
 	static float elapsedTime = 0.0f;
 	elapsedTime += deltaTime;
 	mariosModelMatrix = MMath::rotate(elapsedTime * 90.0f, Vec3(0.0f, 1.0f, 0.0f));
+	lightsModelMatrix = MMath::rotate(elapsedTime * 90.0f, Vec3(0.0f, 1.0f, 0.0f));
 }
 
 void Scene0::Render() const {
@@ -76,6 +77,7 @@ void Scene0::Render() const {
 			vRenderer->SetLightsUBO(lightPos, diffuse, specular, ambient);
 		}
 		vRenderer->SetPushConstModelMatrix(mariosModelMatrix);
+		vRenderer->SetPushConstModelMatrix(lightsModelMatrix);
 		vRenderer->Render();
 		break;
 

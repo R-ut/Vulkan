@@ -44,13 +44,14 @@ bool VulkanRenderer::OnCreate() {
     createDepthResources();
     createFramebuffers();
     Create2DTextureImage("./textures/mario_fire.png");
+    //indexedVertexBuffer.pushback(LoadModelIndexed("./meshes/Mario.obj"));
     LoadModelIndexed("./meshes/Mario.obj");
     CreateGraphicsPipeline("./shaders/phong.vert.spv", "./shaders/phong.frag.spv");
     uniformBuffers = createUniformBuffers<CameraUBO>();
     lightsUBOBuffers = createUniformBuffers<LightUBO>();
     createDescriptorSets();
     createCommandBuffers();
-    RecordCommandBuffer();
+    //RecordCommandBuffer(); A3 because if u are using queue it will crash
     createSyncObjects();
     return true;
 }
@@ -132,7 +133,7 @@ void VulkanRenderer::Render() {
   // Update the position, diffuse, specular, ambient for each light
     UpdateUniformBuffer<LightUBO>(lightsUBOdatas, lightsUBOBuffers[imageIndex]);
 
-
+    RecordCommandBuffer();
     if (imagesInFlight[imageIndex] != VK_NULL_HANDLE) {
         vkWaitForFences(device, 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
     }
@@ -1226,6 +1227,8 @@ void VulkanRenderer::RecordCommandBuffer() {
 
         vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+        //use a for loop here to loop over all the character over the scene
+        //for loop with pushconstant.size as j 
         vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
         VkBuffer vertexBuffers[] = { indexedVertexBuffer.vertBufferID };
@@ -1280,6 +1283,8 @@ void VulkanRenderer::SetPushConstModelMatrix(const Matrix4& modelMatrix_)
     std::memcpy(pushConstant.modelMatrix, &pushConstant.modelMatrix, sizeof(pushConstant.modelMatrix));
     std::memcpy(pushConstant.normalMatrix, &pushConstant.normalMatrix, sizeof(pushConstant.normalMatrix));
     RecordCommandBuffer();
+    //pushconstant.push(modelmatrix);
+    //std::queue<ModelMatrixPushConstant> pushconstant;
 }
 
 
