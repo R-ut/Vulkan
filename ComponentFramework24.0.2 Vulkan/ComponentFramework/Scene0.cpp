@@ -30,7 +30,9 @@ bool Scene0::OnCreate() {
 		aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 		camera->Perspective(45.0f, aspectRatio, 0.5f, 20.0f);
 		camera->LookAt(Vec3(0.0f, 0.0f, 5.0f), Vec3(0.0f, 0.0f, 0.0f), Vec3(0.0f, 1.0f, 0.0f));
+		
 
+		
 		break;
 
 	case RendererType::OPENGL:
@@ -77,15 +79,15 @@ void Scene0::Render() const {
 			Vec4 specular[] = { Vec4(0.5f, 0.5f,0.5f,0.0f), Vec4(0.5f, 0.5f,0.5f,0.0f), Vec4(0.5f, 0.5f,0.5f,0.0f) };
 			Vec4 ambient = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
 			vRenderer->SetLightsUBO(lightPos, diffuse, specular, ambient);
+			// Set model matrix for first Mario
+
 		}
-		 // Set model matrix for first Mario
-        vRenderer->SetPushConstModelMatrix(mariosModelMatrix, 0); // Texture index 0
+		vRenderer->SetPushConstModelMatrix(mariosModelMatrix, 0); // Texture index 0
 
-        // Set model matrix for second Mario (translated along the X-axis to make it visible)
-        vRenderer->SetPushConstModelMatrix(mariosModelMatrix2, 1); // Texture index 1
-
-        // Set model matrix for lights (e.g., a light object above the scene)
-        vRenderer->SetPushConstModelMatrix(lightsModelMatrix * MMath::translate(Vec3(0.0f, 5.0f, 0.0f)), 2);
+		// Set model matrix for second Mario (translated along the X-axis to make it visible)
+		vRenderer->SetPushConstModelMatrix(mariosModelMatrix2, 1); // Texture index 1
+		// Set model matrix for lights (e.g., a light object above the scene)
+		vRenderer->SetPushConstModelMatrix(lightsModelMatrix * MMath::translate(Vec3(0.0f, 5.0f, 0.0f)), 2);
 
 		vRenderer->Render();
 		break;

@@ -20,15 +20,16 @@ layout(location = 0) out vec4 fragColor;
 
 layout(binding = 2) uniform sampler2D texSampler[2]; // Texture array with two elements
 
-layout(push_constant) uniform Push {
+layout(push_constant,std140) uniform Push {
     mat4 modelMatrix;
-    mat4 normalMatrix;
+    mat3x4 normalMatrix;
     uint textureIndex;
 } push;
 
 void main() {
     vec4 fragColorAccum = vec4(0.0, 0.0, 0.0, 0.0);
-    vec4 kt = texture(texSampler[fragTextureIndex], fragTexCoords); // Sample from the texture array using the index
+     
+    vec4 kt = texture(texSampler[push.textureIndex], fragTexCoords); // Sample from the texture array using the index
 
     for (int i = 0; i < NUM_LIGHTS; i++) {
         float diff = max(dot(vertNormal, lightDir[i]), 0.0);

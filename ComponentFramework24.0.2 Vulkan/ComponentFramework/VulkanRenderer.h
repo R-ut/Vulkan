@@ -194,7 +194,7 @@ public: /// Member functions
     void SetPushConstModelMatrix(const Matrix4& modelMatrix_, const int index_);
     Sampler2D Create2DTextureImage(const char* texureFile);
     VkPipeline CreateGraphicsPipeline(const char* vertFile, const char* fragFile);
-    void LoadModelIndexed(const char* filename);
+    IndexedVertexBuffer LoadModelIndexed(const char* filename);
     void RecreateSwapChain();
 
 private: /// Private member variables
@@ -213,7 +213,7 @@ private: /// Private member variables
     VkDescriptorPool descriptorPool;
     VkDescriptorSetLayout descriptorSetLayout;
     VkPipelineLayout pipelineLayout;
-    VkPipeline graphicsPipeline;
+    std::vector<VkPipeline> graphicsPipelines;
 
 
     VkImage depthImage;
@@ -242,7 +242,7 @@ private: /// Private member variables
     Sampler2D texture2D;
     CameraUBO cameraUBOdata;
     LightUBO lightsUBOdatas;
-    std::queue<ModelMatrixPushConstant> pushconstant;
+    std::vector<ModelMatrixPushConstant> pushconstant;
 
     std::vector<IndexedVertexBuffer> indexedVertexBuffers;
     //uniformBuffer is nothing but camera buffer

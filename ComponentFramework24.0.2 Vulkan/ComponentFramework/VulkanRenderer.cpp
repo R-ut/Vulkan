@@ -7,7 +7,7 @@
 
 
 VulkanRenderer::VulkanRenderer() : /// Initialize all the variables
-    window(nullptr), instance(nullptr), debugMessenger(0), surface(0), commandPool(0), device(nullptr), graphicsPipeline(0),
+    window(nullptr), instance(nullptr), debugMessenger(0), surface(0), commandPool(0), device(nullptr), graphicsPipelines(0),
     windowWidth(0), windowHeight(0), presentQueue(0), graphicsQueue(nullptr), pipelineLayout(0), renderPass(0), swapChain(0),
     swapChainExtent{}, swapChainImageFormat{}, depthImage(0), depthImageMemory(0), depthImageView(0), descriptorPool(0) {
 
@@ -37,21 +37,22 @@ bool VulkanRenderer::OnCreate() {
     createSwapChain();
     createImageViews();
     createRenderPass();
-
+     
 
     createCommandPool();
     descriptorSetLayout = createDescriptorSetLayout();
-    descriptorPool = createDescriptorPool();
+    descriptorPool =  createDescriptorPool();
 
     createDepthResources();
     createFramebuffers();
     textures.push_back(Create2DTextureImage("./textures/mario_mime.png"));
     textures.push_back(Create2DTextureImage("./textures/mario_fire.png"));
-    LoadModelIndexed("./meshes/Mario.obj");
-    LoadModelIndexed("./meshes/Mario.obj");
-    graphicsPipeline = CreateGraphicsPipeline("./shaders/multiphong.vert.spv", "./shaders/multiPhong.frag.spv");
+    indexedVertexBuffers.push_back(LoadModelIndexed("./meshes/Mario.obj"));
+    indexedVertexBuffers.push_back(LoadModelIndexed("./meshes/Mario.obj"));
+    graphicsPipelines.push_back((CreateGraphicsPipeline("./shaders/multiphong.vert.spv", "./shaders/multiPhong.frag.spv")));
     uniformBuffers = createUniformBuffers<CameraUBO>();
     lightsUBOBuffers = createUniformBuffers<LightUBO>();
+    
     descriptorSets = createDescriptorSets(descriptorSetLayout,descriptorPool);
     createCommandBuffers();
     //RecordCommandBuffer(); //A3 because if u are using queue it will crash
@@ -94,7 +95,7 @@ void VulkanRenderer::OnDestroy() {
         vkDestroyImage(device, texture.image, nullptr);
         vkFreeMemory(device, texture.imageDeviceMemory, nullptr);
     }
-
+    //vkDestroyPipeline(device, graphicsPipeline, nullptr);
     vkDestroyDescriptorSetLayout(device, descriptorSetLayout, nullptr);
 
     for (auto indexedVertexBuffer : indexedVertexBuffers) {
@@ -221,8 +222,10 @@ void VulkanRenderer::cleanupSwapChain() {
 
     vkFreeCommandBuffers(device, commandPool, static_cast<uint32_t>(commandBuffers.size()), commandBuffers.data());
 
-   
-        vkDestroyPipeline(device, graphicsPipeline, nullptr);
+   for(auto graphicsPipeline : graphicsPipelines)
+   {
+    vkDestroyPipeline(device, graphicsPipeline, nullptr);
+   }    
     
     vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
     vkDestroyRenderPass(device, renderPass, nullptr);
@@ -633,6 +636,8 @@ VkPipeline VulkanRenderer::CreateGraphicsPipeline(const char* vertFile, const ch
     pipelineInfo.subpass = 0;
     pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
+    
+
     if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
         throw std::runtime_error("failed to create graphics pipeline!");
     }
@@ -890,7 +895,7 @@ void VulkanRenderer::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t 
     endSingleTimeCommands(commandBuffer);
 }
 
-void VulkanRenderer::LoadModelIndexed(const char* filename) {
+IndexedVertexBuffer VulkanRenderer::LoadModelIndexed(const char* filename) {
 
     IndexedVertexBuffer indexedVertexBuffer;
     std::vector<Vertex> vertices;
@@ -940,7 +945,7 @@ void VulkanRenderer::LoadModelIndexed(const char* filename) {
     createVertexBuffer(indexedVertexBuffer, vertices);
     createIndexBuffer(indexedVertexBuffer, indices);
 
-	indexedVertexBuffers.push_back(indexedVertexBuffer);
+	return indexedVertexBuffer;
 }
 
 void VulkanRenderer::createVertexBuffer(IndexedVertexBuffer& indexedBufferMemory, const std::vector<Vertex>& vertices) {
@@ -1261,7 +1266,7 @@ void VulkanRenderer::RecordCommandBuffer() {
 
         vkCmdBeginRenderPass(commandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+        vkCmdBindPipeline(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipelines[0]);
 
         // Loop through each indexed vertex buffer and use different transformations
         for (size_t j = 0; j < indexedVertexBuffers.size(); ++j) {
@@ -1270,18 +1275,9 @@ void VulkanRenderer::RecordCommandBuffer() {
             vkCmdBindIndexBuffer(commandBuffers[i], indexedVertexBuffers[j].indexBufferID, 0, VK_INDEX_TYPE_UINT32);
             vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
 
-            // Use different model matrices for each instance
-            ModelMatrixPushConstant modelMatrixPushConstant;
-            if (j == 0) {
-                modelMatrixPushConstant = pushconstant.front(); // Mario 1 stays at origin
-            }
-            else {
-                modelMatrixPushConstant = pushconstant.back();  // Mario 2, moved to a different position
-            }
-
             vkCmdPushConstants(commandBuffers[i], pipelineLayout,
                 VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                0, sizeof(ModelMatrixPushConstant), &modelMatrixPushConstant);
+                0, sizeof(ModelMatrixPushConstant), &pushconstant[j]);
 
             vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indexedVertexBuffers[j].indexBufferLength), 1, 0, 0, 0);
         }
@@ -1351,11 +1347,8 @@ void VulkanRenderer::SetPushConstModelMatrix(const Matrix4& modelMatrix_,const i
 
     
     modelMatrixPushConst.textureIndex = index_; 
-    pushconstant.push(modelMatrixPushConst);
+    pushconstant.push_back(modelMatrixPushConst);
     std::cout << pushconstant.size() << std::endl;
-    
-   
-   
 }
 
 
