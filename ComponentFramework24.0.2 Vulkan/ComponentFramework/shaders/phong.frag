@@ -15,12 +15,19 @@ layout (location = 5) in vec2 fragTexCoords;
 
 layout (location = 0) out vec4 fragColor;
 
-layout(binding = 2) uniform sampler2D texSampler;
+layout(binding = 2) uniform sampler2D texSampler[2];
+
+layout(push_constant) uniform Push {
+	mat4 modelMatrix;
+	mat4 normalMatrix;
+	uint textureIndex;
+} push;
+
 
 void main() { 
     
     vec4 fragColorAccum = vec4(0.0,0,0,0);
-    vec4 kt = texture(texSampler, fragTexCoords);
+    vec4 kt = texture(texSampler[push.textureIndex], fragTexCoords);
     for (int i = 0; i < NUM_LIGHTS; i++) {
         
         

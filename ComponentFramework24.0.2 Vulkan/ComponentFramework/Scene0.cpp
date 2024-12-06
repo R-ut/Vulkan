@@ -22,6 +22,7 @@ Scene0::~Scene0() {
 bool Scene0::OnCreate() {
 	int width = 0, height = 0;
 	float aspectRatio;
+	
 	switch (renderer->getRendererType()) {
 	case RendererType::VULKAN:
 
@@ -57,7 +58,8 @@ void Scene0::HandleEvents(const SDL_Event& sdlEvent) {
 void Scene0::Update(const float deltaTime) {
 	static float elapsedTime = 0.0f;
 	elapsedTime += deltaTime;
-	mariosModelMatrix = MMath::rotate(elapsedTime * 90.0f, Vec3(0.0f, 1.0f, 0.0f));
+	mariosModelMatrix = MMath::rotate(elapsedTime * 40.0f, Vec3(1.0f, 1.0f, 0.0f));
+	mariosModelMatrix2 = MMath::rotate(elapsedTime * 45.0f, Vec3(0.0f, 1.0f, 0.0f));
 	lightsModelMatrix = MMath::rotate(elapsedTime * 90.0f, Vec3(0.0f, 1.0f, 0.0f));
 }
 
@@ -76,8 +78,15 @@ void Scene0::Render() const {
 			Vec4 ambient = Vec4(1.0f, 1.0f, 1.0f, 1.0f);
 			vRenderer->SetLightsUBO(lightPos, diffuse, specular, ambient);
 		}
-		vRenderer->SetPushConstModelMatrix(mariosModelMatrix);
-		vRenderer->SetPushConstModelMatrix(lightsModelMatrix);
+		 // Set model matrix for first Mario
+        vRenderer->SetPushConstModelMatrix(mariosModelMatrix, 0); // Texture index 0
+
+        // Set model matrix for second Mario (translated along the X-axis to make it visible)
+        vRenderer->SetPushConstModelMatrix(mariosModelMatrix2, 1); // Texture index 1
+
+        // Set model matrix for lights (e.g., a light object above the scene)
+        vRenderer->SetPushConstModelMatrix(lightsModelMatrix * MMath::translate(Vec3(0.0f, 5.0f, 0.0f)), 2);
+
 		vRenderer->Render();
 		break;
 

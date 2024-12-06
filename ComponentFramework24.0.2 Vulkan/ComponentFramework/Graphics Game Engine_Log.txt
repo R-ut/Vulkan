@@ -1,3 +1,14 @@
 [INFO]: Starting the GameSceneManager
 [INFO]: Created Scene0: 
+[INFO]: Created Scene0: 
+[INFO]: Created Scene0: 
+[INFO]: Created Scene0: 
+[INFO]: Created Scene0: 
+[INFO]: Created Scene0: 
+[INFO]: Created Scene0: 
+[INFO]: Created Scene0: 
+[INFO]: Created Scene0: 
+[INFO]: Created Scene0: 
+[INFO]: Created Scene0: 
+[INFO]: Created Scene0: 
 [INFO]: Deleting the GameSceneManager

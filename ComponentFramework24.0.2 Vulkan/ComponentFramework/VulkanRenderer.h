@@ -17,6 +17,7 @@
 #include <set>
 #include <unordered_map>
 #include <array>
+#include <queue>
 
 #include <Vector.h>
 #include <VMath.h>
@@ -145,9 +146,20 @@ struct LightUBO {
     //int numLights;
 };
 
+// A 3x3 cannot be sent to the GPU data due to alignment issues. 
+/// If I try to send a 3x3 yo GPU it will be bumped up to a 4x4. 
+/// I can fake it by storing the 3x3 in an array of 3 Vec4s as 
+/// I have mapped below. Vulkan and OpenGl are column centric - right hand rule.
+/// The real reason to do this is to make room in the push constant for other data.
+///	Vec4    0(x)	3(y)	6(z)    0(w)			
+///	Vec4    1(x)	4(y)	7(z)    0(w)		
+///	Vec4    2(x)	5(y)	9(z)    0(w)		
 struct ModelMatrixPushConstant {
     Matrix4 modelMatrix;
-    Matrix4 normalMatrix;
+    Vec4 normalMatrix[3];
+    uint32_t textureIndex;
+    /// 116 bytes, I'm within the 128 byte limit and everything
+    /// lines up on a 4 byte boundry. 
 };
 
 struct Sampler2D {
@@ -179,9 +191,9 @@ public: /// Member functions
     //Make a set lightsubo with all the values in it.
     void SetLightsUBO(Vec4 pos_[], Vec4 diffuse_[], Vec4 specular_[], Vec4 ambient_);
     //U have a pic of it
-    void SetPushConstModelMatrix(const Matrix4& modelMatrix_);
-    void Create2DTextureImage(const char* texureFile);
-    void CreateGraphicsPipeline(const char* vertFile, const char* fragFile);
+    void SetPushConstModelMatrix(const Matrix4& modelMatrix_, const int index_);
+    Sampler2D Create2DTextureImage(const char* texureFile);
+    VkPipeline CreateGraphicsPipeline(const char* vertFile, const char* fragFile);
     void LoadModelIndexed(const char* filename);
     void RecreateSwapChain();
 
@@ -230,12 +242,14 @@ private: /// Private member variables
     Sampler2D texture2D;
     CameraUBO cameraUBOdata;
     LightUBO lightsUBOdatas;
-    ModelMatrixPushConstant pushConstant;
+    std::queue<ModelMatrixPushConstant> pushconstant;
 
-    IndexedVertexBuffer indexedVertexBuffer;
+    std::vector<IndexedVertexBuffer> indexedVertexBuffers;
     //uniformBuffer is nothing but camera buffer
     std::vector<BufferMemory> uniformBuffers;
     std::vector<BufferMemory> lightsUBOBuffers;
+    std::vector<Sampler2D> textures;
+    
 
 private: /// Member functions
     bool hasStencilComponent(VkFormat format);
@@ -248,14 +262,14 @@ private: /// Member functions
     //void updateUniformBuffer(uint32_t currentImage);
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
     void createRenderPass();
-    void createDescriptorSetLayout();
+    VkDescriptorSetLayout createDescriptorSetLayout();
 
     void createFramebuffers();
     void createCommandPool();
     void createDepthResources();
 
-    void createTextureImageView();
-    void createTextureSampler();
+    void createTextureImageView(Sampler2D &texture2D);
+    void createTextureSampler(Sampler2D &texture2D);
     void createImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling,
         VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 
@@ -272,8 +286,8 @@ private: /// Member functions
 
 
     void createUniformBuffers();
-    void createDescriptorPool();
-    void createDescriptorSets();
+    VkDescriptorPool createDescriptorPool();
+    std::vector<VkDescriptorSet> createDescriptorSets(VkDescriptorSetLayout descriptorSetLayout, VkDescriptorPool descriptorPool);
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer& buffer, VkDeviceMemory& bufferMemory);
     void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
     void createCommandBuffers();

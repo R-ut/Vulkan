@@ -111,5 +111,11 @@
     <None Include="shaders\phong.vert">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="shaders\multiPhong.frag">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\multiphong.vert">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

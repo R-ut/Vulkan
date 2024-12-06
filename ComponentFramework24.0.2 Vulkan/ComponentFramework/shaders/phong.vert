@@ -21,6 +21,7 @@ layout(binding = 1) uniform GlobalLightingUBO {
 layout(push_constant) uniform Push {
 	mat4 modelMatrix;
 	mat4 normalMatrix;
+	uint textureIndex;
 } push;
 
 
