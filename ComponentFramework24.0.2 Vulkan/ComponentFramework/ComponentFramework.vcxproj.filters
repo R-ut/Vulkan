@@ -120,16 +120,16 @@
     <None Include="shaders\multiphong.vert">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="shaders\tessTexturePhong.ctrl">
+    <None Include="shaders\tessTexturePhongCtrl.tess">
       <Filter>Resource Files\Tesellation</Filter>
     </None>
-    <None Include="shaders\tessTexturePhong.eval">
+    <None Include="shaders\tessTexturePhongEval.tese">
       <Filter>Resource Files\Tesellation</Filter>
     </None>
-    <None Include="shaders\tessTexturePhong.frag">
+    <None Include="shaders\tessTexturePhongFrag.tese">
       <Filter>Resource Files\Tesellation</Filter>
     </None>
-    <None Include="shaders\tessTexturePhong.vert">
+    <None Include="shaders\tessTexturePhongVert.tese">
       <Filter>Resource Files\Tesellation</Filter>
     </None>
   </ItemGroup>

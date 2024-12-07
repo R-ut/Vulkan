@@ -193,7 +193,7 @@ public: /// Member functions
     //U have a pic of it
     void SetPushConstModelMatrix(const Matrix4& modelMatrix_, const int index_);
     Sampler2D Create2DTextureImage(const char* texureFile);
-    VkPipeline CreateGraphicsPipeline(const char* vertFile, const char* fragFile);
+    VkPipeline CreateGraphicsPipeline(const char* vertFile,const char* contFile, const char* evalFile, const char* fragFile);
     IndexedVertexBuffer LoadModelIndexed(const char* filename);
     void RecreateSwapChain();
 
