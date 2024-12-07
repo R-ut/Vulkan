@@ -55,7 +55,7 @@ bool VulkanRenderer::OnCreate() {
     
     descriptorSets = createDescriptorSets(descriptorSetLayout,descriptorPool);
     createCommandBuffers();
-    //RecordCommandBuffer(); //A3 because if u are using queue it will crash
+    
     createSyncObjects();
     return true;
 }
@@ -82,6 +82,7 @@ void VulkanRenderer::RecreateSwapChain() {
     descriptorPool = createDescriptorPool();
     descriptorSets =  createDescriptorSets(descriptorSetLayout, descriptorPool);
     createCommandBuffers();
+    RecordCommandBuffer(); //A3 because if u are using queue it will crash
 }
 
 void VulkanRenderer::OnDestroy() {
@@ -1242,6 +1243,10 @@ void VulkanRenderer::createCommandBuffers() {
 void VulkanRenderer::RecordCommandBuffer() {
     vkDeviceWaitIdle(device); //works for today maynot be the best way
 
+    for (int i = 0; i < 2; i++) {
+        std::cout << "Model Matrix for index " << i << ": " << std::endl;
+        pushconstant[i].modelMatrix.print();
+    }
     for (size_t i = 0; i < commandBuffers.size(); i++) {
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -1280,6 +1285,7 @@ void VulkanRenderer::RecordCommandBuffer() {
                 0, sizeof(ModelMatrixPushConstant), &pushconstant[j]);
 
             vkCmdDrawIndexed(commandBuffers[i], static_cast<uint32_t>(indexedVertexBuffers[j].indexBufferLength), 1, 0, 0, 0);
+          
         }
 
         vkCmdEndRenderPass(commandBuffers[i]);
@@ -1288,7 +1294,7 @@ void VulkanRenderer::RecordCommandBuffer() {
             throw std::runtime_error("failed to record command buffer!");
         }
     }
-
+    pushconstant.clear();
 }
 
 void VulkanRenderer::createSyncObjects() {

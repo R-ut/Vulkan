@@ -58,11 +58,10 @@ void Scene0::HandleEvents(const SDL_Event& sdlEvent) {
 }
 
 void Scene0::Update(const float deltaTime) {
-	static float elapsedTime = 0.0f;
+	
 	elapsedTime += deltaTime;
 	mariosModelMatrix = MMath::rotate(elapsedTime * 40.0f, Vec3(1.0f, 1.0f, 0.0f));
 	mariosModelMatrix2 = MMath::rotate(elapsedTime * 45.0f, Vec3(0.0f, 1.0f, 0.0f));
-	lightsModelMatrix = MMath::rotate(elapsedTime * 90.0f, Vec3(0.0f, 1.0f, 0.0f));
 }
 
 void Scene0::Render() const {
@@ -85,9 +84,8 @@ void Scene0::Render() const {
 		vRenderer->SetPushConstModelMatrix(mariosModelMatrix, 0); // Texture index 0
 
 		// Set model matrix for second Mario (translated along the X-axis to make it visible)
-		vRenderer->SetPushConstModelMatrix(mariosModelMatrix2, 1); // Texture index 1
+		vRenderer->SetPushConstModelMatrix(mariosModelMatrix2 * MMath::translate(Vec3(2.0f, 0.0f, 0.0f)), 1); // Texture index 1
 		// Set model matrix for lights (e.g., a light object above the scene)
-		vRenderer->SetPushConstModelMatrix(lightsModelMatrix * MMath::translate(Vec3(0.0f, 5.0f, 0.0f)), 2);
 
 		vRenderer->Render();
 		break;
@@ -101,8 +99,6 @@ void Scene0::Render() const {
 		glEnable(GL_DEPTH_TEST);
 		glEnable(GL_CULL_FACE);
 		/// Draw your scene here
-
-
 		glUseProgram(0);
 
 		break;

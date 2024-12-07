@@ -15,8 +15,8 @@ private:
 	Renderer *renderer;
 	Camera *camera;
 	Matrix4 mariosModelMatrix;
-	Matrix4 lightsModelMatrix;
 	Matrix4 mariosModelMatrix2;
+	float elapsedTime = 0.0f;
 public:
 	explicit Scene0(Renderer* renderer_);
 	virtual ~Scene0();
