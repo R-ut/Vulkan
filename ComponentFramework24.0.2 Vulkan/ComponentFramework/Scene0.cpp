@@ -3,6 +3,7 @@
 #include "Debug.h"
 #include "Scene0.h"
 #include "MMath.h"
+#include "QMath.h"
 #include "Debug.h"
 #include "VulkanRenderer.h"
 #include "OpenGLRenderer.h"
@@ -61,7 +62,7 @@ void Scene0::Update(const float deltaTime) {
 	
 	elapsedTime += deltaTime;
 	mariosModelMatrix = MMath::rotate(elapsedTime * 40.0f, Vec3(1.0f, 1.0f, 0.0f));
-	mariosModelMatrix2 = MMath::rotate(elapsedTime * 45.0f, Vec3(0.0f, 1.0f, 0.0f));
+	mariosModelMatrix2 = MMath::rotate(elapsedTime * 45.0f, Vec3(0.0f, 1.0f, 1.0f));
 }
 
 void Scene0::Render() const {

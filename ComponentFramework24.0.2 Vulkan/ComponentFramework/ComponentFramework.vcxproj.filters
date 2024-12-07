@@ -25,6 +25,9 @@
     <Filter Include="Source Files\Renderers">
       <UniqueIdentifier>{30c80976-ed84-4ca8-ab3a-bd86aa11c0ac}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\Tesellation">
+      <UniqueIdentifier>{450e4dbf-387d-4711-a21f-579cad115a1d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -116,6 +119,18 @@
     </None>
     <None Include="shaders\multiphong.vert">
       <Filter>Resource Files</Filter>
+    </None>
+    <None Include="shaders\tessTexturePhong.ctrl">
+      <Filter>Resource Files\Tesellation</Filter>
+    </None>
+    <None Include="shaders\tessTexturePhong.eval">
+      <Filter>Resource Files\Tesellation</Filter>
+    </None>
+    <None Include="shaders\tessTexturePhong.frag">
+      <Filter>Resource Files\Tesellation</Filter>
+    </None>
+    <None Include="shaders\tessTexturePhong.vert">
+      <Filter>Resource Files\Tesellation</Filter>
     </None>
   </ItemGroup>
 </Project>
