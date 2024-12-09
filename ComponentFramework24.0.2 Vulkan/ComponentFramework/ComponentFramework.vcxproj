@@ -157,10 +157,10 @@
     <None Include="shaders\phong.vert" />
     <None Include="shaders\simpleTexture.frag" />
     <None Include="shaders\simpleTexture.vert" />
-    <None Include="shaders\tessTexturePhongCtrl.tess" />
+    <None Include="shaders\tessTexturePhongCtrl.tesc" />
     <None Include="shaders\tessTexturePhongEval.tese" />
-    <None Include="shaders\tessTexturePhongFrag.tese" />
-    <None Include="shaders\tessTexturePhongVert.tese" />
+    <None Include="shaders\tessTexturePhongFrag.frag" />
+    <None Include="shaders\tessTexturePhongVert.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -11,6 +11,7 @@ layout(set = 0, binding = 1) uniform sampler2D textureData;
 
 layout(location = 0) in vec2 uvCoordFromCtrl[];
 layout(location = 1) in vec3 normalFromCtrl[];
+layout(location = 2) in float vertDistanceOut[];
 
 layout(location = 0) out vec2 uvCoordFromEval;
 layout(location = 1) out vec3 normalFromEval;

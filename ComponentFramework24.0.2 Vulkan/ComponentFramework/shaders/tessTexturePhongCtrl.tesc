@@ -13,11 +13,15 @@ layout(location = 2) in float vertDistance[];
 
 layout(location = 0) out vec2 uvCoordFromCtrl[];
 layout(location = 1) out vec3 normalFromCtrl[];
+layout(location = 2) out float vertDistanceOut[];
+
 void main() {
     // Pass through input vertices to tessellation evaluation stage
     gl_out[gl_InvocationID].gl_Position =  gl_in[gl_InvocationID].gl_Position;
     uvCoordFromCtrl[gl_InvocationID] = uvCoordFromVert[gl_InvocationID];
     normalFromCtrl[gl_InvocationID] = normalFromVert[gl_InvocationID];
+    vertDistanceOut[gl_InvocationID] = vertDistance[gl_InvocationID];
+
    float tesslevel = 10.0;
     // Set tessellation levels
     if (gl_InvocationID == 0) {
