@@ -14,7 +14,6 @@ VulkanRenderer::VulkanRenderer() : /// Initialize all the variables
 }
 
 VulkanRenderer::~VulkanRenderer() {
-
 }
 
 SDL_Window* VulkanRenderer::CreateWindow(std::string name_, int width_, int height_) {
@@ -49,7 +48,8 @@ bool VulkanRenderer::OnCreate() {
     textures.push_back(Create2DTextureImage("./textures/mario_fire.png"));
     indexedVertexBuffers.push_back(LoadModelIndexed("./meshes/Mario.obj"));
     indexedVertexBuffers.push_back(LoadModelIndexed("./meshes/Mario.obj"));
-    graphicsPipelines.push_back((CreateGraphicsPipeline("./shaders/multiphong.vert.spv", "./shaders/multiPhong.frag.spv")));
+    graphicsPipelines.push_back((CreateGraphicsPipeline("./shaders/tessVert.vert.spv","./shaders/tessCtrl.tesc.spv",
+        "./shaders/tessEval.tese.spv","./shaders/tessFrag.frag.spv")));
     uniformBuffers = createUniformBuffers<CameraUBO>();
     lightsUBOBuffers = createUniformBuffers<LightUBO>();
     
@@ -74,7 +74,8 @@ void VulkanRenderer::RecreateSwapChain() {
     createSwapChain();
     createImageViews();
     createRenderPass();
-    CreateGraphicsPipeline("shaders/simpleTexture.vert.spv", "shaders/simpleTexture.frag.spv");
+    CreateGraphicsPipeline("./shaders/tessVert.vert.spv", "./shaders/tessCtrl.tesc.spv",
+        "./shaders/tessEval.tese.spv", "./shaders/tessFrag.frag.spv");
     createDepthResources();
     createFramebuffers();
     uniformBuffers = createUniformBuffers<CameraUBO>();
@@ -359,6 +360,7 @@ void VulkanRenderer::createLogicalDevice() {
 
     VkPhysicalDeviceFeatures deviceFeatures{};
     deviceFeatures.samplerAnisotropy = VK_TRUE;
+    deviceFeatures.fillModeNonSolid = VK_TRUE; // Enable non-solid fill modes(Not rut's work)
 
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -512,11 +514,13 @@ VkPipeline VulkanRenderer::CreateGraphicsPipeline(const char* vertFile, const ch
     VkPipeline graphicsPipeline;
     auto vertShaderCode = readFile(vertFile);
     auto fragShaderCode = readFile(fragFile);
-    auto tessControlShaderModule = readFile(controlFile);
-	auto tessEvalShaderModule = readFile(evalFile);
+    auto tessCtrlShaderCode = readFile(controlFile);
+	auto tessEvalShaderCode = readFile(evalFile);
 
     VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
     VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
+    VkShaderModule tessCtrlShaderModule = createShaderModule(tessCtrlShaderCode);
+    VkShaderModule tessEvalShaderModule = createShaderModule(tessEvalShaderCode);
 
     VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
     vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -527,7 +531,7 @@ VkPipeline VulkanRenderer::CreateGraphicsPipeline(const char* vertFile, const ch
     VkPipelineShaderStageCreateInfo tessControlStageInfo{};
     tessControlStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     tessControlStageInfo.stage = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-    tessControlStageInfo.module = tessControlShaderModule; // Load TCS
+    tessControlStageInfo.module = tessCtrlShaderModule; // Load TCS
     tessControlStageInfo.pName = "main";
 
     VkPipelineShaderStageCreateInfo tessEvalStageInfo{};
@@ -625,16 +629,16 @@ VkPipeline VulkanRenderer::CreateGraphicsPipeline(const char* vertFile, const ch
 
     VkPushConstantRange range{};
     range.offset = 0;
-    range.size = 132;
-    range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT;
+    range.size = sizeof(ModelMatrixPushConstant); //Changing it for tess because size of pipeline is different now
+    range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1;
     pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
-    pipelineLayoutInfo.pushConstantRangeCount = 0;
-    pipelineLayoutInfo.pPushConstantRanges = nullptr;
+    pipelineLayoutInfo.pushConstantRangeCount = 1;
+    pipelineLayoutInfo.pPushConstantRanges = &range;
 
     if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
         throw std::runtime_error("failed to create pipeline layout!");
@@ -665,7 +669,8 @@ VkPipeline VulkanRenderer::CreateGraphicsPipeline(const char* vertFile, const ch
 
     vkDestroyShaderModule(device, fragShaderModule, nullptr);
     vkDestroyShaderModule(device, vertShaderModule, nullptr);
-
+    vkDestroyShaderModule(device, tessEvalShaderModule, nullptr);
+    vkDestroyShaderModule(device, tessCtrlShaderModule, nullptr);
     return graphicsPipeline;
 }
 

@@ -1,31 +1,38 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-// Inputs from vertex buffer
-layout(location = 0) in vec4 vVertex;
-layout(location = 1) in vec3 vNormal;
-layout(location = 2) in vec2 uvCoord;
+const int NUM_LIGHTS = 3;
 
-// Uniform block for matrices
-layout(set = 0, binding = 0) uniform Matrices {
+layout(location = 0) in vec4 vVertex;
+layout(location = 1) in vec4 vNormal;
+layout(location = 2) in vec2 texCoords;
+
+layout(binding = 0) uniform CameraUBO {
     mat4 projectionMatrix;
     mat4 viewMatrix;
-    mat4 modelMatrix;
-};
+} camera;
 
-// Outputs to the tessellation control shader
-layout(location = 0) out vec2 uvCoordFromVert;
-layout(location = 1) out vec3 normalFromVert;
-layout(location = 2) out float vertDistance;
+layout(push_constant, std140) uniform Push {
+    mat4 modelMatrix;
+    mat3x4 normalMatrix;
+    uint textureIndex;
+} push;
+
+layout(location = 0) out vec3 outPosition;   // Pass to TCS
+layout(location = 1) out vec3 outNormal;     // Pass to TCS
+layout(location = 2) out vec2 outTexCoords;  // Pass to TCS
+layout(location = 3) flat out uint outTextureIndex; // Flat qualifier to avoid interpolation
 
 void main() {
-    // Pass through attributes to the tessellation control shader
-    uvCoordFromVert = uvCoord;
-    normalFromVert = vNormal;
+    // Compute world-space position and normal
+    mat3 normalMatrix = mat3(push.normalMatrix);
+    outPosition = vec3(push.modelMatrix * vVertex);
+    outNormal = normalize(normalMatrix * vNormal.xyz);
 
-    // Compute vertex distance for LOD (Level of Detail)
-    vertDistance = length(viewMatrix * modelMatrix * vVertex);
+    // Pass texture coordinates and index
+    outTexCoords = texCoords;
+    outTextureIndex = push.textureIndex;
 
-    // Transform vertex position to clip space
-    gl_Position = projectionMatrix * viewMatrix * modelMatrix * vVertex;
+    // Compute final position in clip space
+    gl_Position = camera.projectionMatrix * camera.viewMatrix * push.modelMatrix * vVertex;
 }

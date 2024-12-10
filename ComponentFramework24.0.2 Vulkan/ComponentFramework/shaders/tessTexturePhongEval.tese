@@ -1,43 +1,32 @@
 #version 450
-layout (triangles, equal_spacing, ccw) in;
+#extension GL_ARB_separate_shader_objects : enable
 
-layout(set = 0, binding = 0) uniform Matrices {
-    mat4 projectionMatrix;
-    mat4 viewMatrix;
-    mat4 modelMatrix;
-};
+layout(triangles, equal_spacing, ccw) in;
 
-layout(set = 0, binding = 1) uniform sampler2D textureData;
+layout(location = 0) in vec3 inPosition[];
+layout(location = 1) in vec3 inNormal[];
+layout(location = 2) in vec2 inTexCoords[];
+layout(location = 3) flat in uint inTextureIndex[];
 
-layout(location = 0) in vec2 uvCoordFromCtrl[];
-layout(location = 1) in vec3 normalFromCtrl[];
-layout(location = 2) in float vertDistanceOut[];
-
-layout(location = 0) out vec2 uvCoordFromEval;
-layout(location = 1) out vec3 normalFromEval;
-
-
-vec2 interpolateVec2(vec2 v0, vec2 v1, vec2 v2) {
-    return gl_TessCoord.x * v0 + gl_TessCoord.y * v1 + gl_TessCoord.z * v2;
-}
-
-vec3 interpolateVec3(vec3 v0, vec3 v1, vec3 v2) {
-    return  gl_TessCoord.x * v0 + gl_TessCoord.y * v1 + gl_TessCoord.z * v2;
-}
-
-vec4 interpolateVec4(vec4 v0, vec4 v1, vec4 v2) {
-    return  gl_TessCoord.x * v0 + gl_TessCoord.y * v1 + gl_TessCoord.z * v2;
-}
+layout(location = 0) out vec3 fragNormal;  // Pass to FS
+layout(location = 1) out vec2 fragTexCoords; // Pass to FS
+layout(location = 2) flat out uint fragTextureIndex; // Pass to FS
 
 void main() {
-   
-    uvCoordFromEval = interpolateVec2(uvCoordFromCtrl[0], uvCoordFromCtrl[1], uvCoordFromCtrl[2]);
-    normalFromEval =  interpolateVec3(normalFromCtrl[0], normalFromCtrl[1], normalFromCtrl[2]);
-    /// Interpolate position across the triangle
-    vec4 position = interpolateVec4(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[2].gl_Position);
-    //vec4 height = vec4(texture(textureData,uvCoordFromEval));
-    float height = texture(textureData, uvCoordFromEval).r ;
-    position.y += -2.0 * height;
-    //vec3 displacement =  height * 4.0;
-    gl_Position =  projectionMatrix * viewMatrix * modelMatrix * (position ) ;
+    // Interpolate attributes
+    vec3 position = gl_TessCoord.x * inPosition[0] +
+                    gl_TessCoord.y * inPosition[1] +
+                    gl_TessCoord.z * inPosition[2];
+
+    fragNormal = normalize(gl_TessCoord.x * inNormal[0] +
+                           gl_TessCoord.y * inNormal[1] +
+                           gl_TessCoord.z * inNormal[2]);
+
+    fragTexCoords = gl_TessCoord.x * inTexCoords[0] +
+                    gl_TessCoord.y * inTexCoords[1] +
+                    gl_TessCoord.z * inTexCoords[2];
+
+    fragTextureIndex = inTextureIndex[0]; // Assume all indices are the same
+
+    gl_Position = vec4(position, 1.0);
 }

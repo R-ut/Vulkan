@@ -1,44 +1,30 @@
-#version 450 
+#version 450
+#extension GL_ARB_separate_shader_objects : enable
+
 layout(vertices = 3) out;
 
-layout(set = 0, binding = 0) uniform TessellationLevels {
-    float tessLevelInner;
-    float tessLevelOuter;
-};
+layout(location = 0) in vec3 inPosition[];
+layout(location = 1) in vec3 inNormal[];
+layout(location = 2) in vec2 inTexCoords[];
+layout(location = 3) flat in uint inTextureIndex[];
 
-
-layout(location = 0) in vec2 uvCoordFromVert[];
-layout(location = 1) in vec3 normalFromVert[];
-layout(location = 2) in float vertDistance[];
-
-layout(location = 0) out vec2 uvCoordFromCtrl[];
-layout(location = 1) out vec3 normalFromCtrl[];
-layout(location = 2) out float vertDistanceOut[];
+layout(location = 0) out vec3 outPosition[];
+layout(location = 1) out vec3 outNormal[];
+layout(location = 2) out vec2 outTexCoords[];
+layout(location = 3) flat out uint outTextureIndex[];
 
 void main() {
-    // Pass through input vertices to tessellation evaluation stage
-    gl_out[gl_InvocationID].gl_Position =  gl_in[gl_InvocationID].gl_Position;
-    uvCoordFromCtrl[gl_InvocationID] = uvCoordFromVert[gl_InvocationID];
-    normalFromCtrl[gl_InvocationID] = normalFromVert[gl_InvocationID];
-    vertDistanceOut[gl_InvocationID] = vertDistance[gl_InvocationID];
+    // Pass through attributes
+    outPosition[gl_InvocationID] = inPosition[gl_InvocationID];
+    outNormal[gl_InvocationID] = inNormal[gl_InvocationID];
+    outTexCoords[gl_InvocationID] = inTexCoords[gl_InvocationID];
+    outTextureIndex[gl_InvocationID] = inTextureIndex[gl_InvocationID];
 
-   float tesslevel = 10.0;
-    // Set tessellation levels
+    // Set tessellation levels (e.g., static values or computed dynamically)
     if (gl_InvocationID == 0) {
-        
-        if(vertDistance[0] < 30.0){
-            tesslevel = 20.0;
-        }else if (vertDistance[0] < 50){
-            tesslevel = 5.0;
-        }else{
-            tesslevel = 1.0;
-        }
-        gl_TessLevelInner[0] = tesslevel;//tessLevelInner;
-
-        gl_TessLevelOuter[0] = tesslevel;
-        gl_TessLevelOuter[1] = tesslevel;
-        gl_TessLevelOuter[2] = tesslevel;
-
+        gl_TessLevelInner[0] = 5.0;
+        gl_TessLevelOuter[0] = 5.0;
+        gl_TessLevelOuter[1] = 5.0;
+        gl_TessLevelOuter[2] = 5.0;
     }
 }
-
