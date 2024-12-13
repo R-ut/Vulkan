@@ -46,8 +46,8 @@ bool VulkanRenderer::OnCreate() {
     createFramebuffers();
     textures.push_back(Create2DTextureImage("./textures/mario_mime.png"));
     textures.push_back(Create2DTextureImage("./textures/mario_fire.png"));
-    indexedVertexBuffers.push_back(LoadModelIndexed("./meshes/Mario.obj"));
-    indexedVertexBuffers.push_back(LoadModelIndexed("./meshes/Mario.obj"));
+    indexedVertexBuffers.push_back(LoadModelIndexed("./meshes/mario.obj"));
+    indexedVertexBuffers.push_back(LoadModelIndexed("./meshes/mario.obj"));
     graphicsPipelines.push_back((CreateGraphicsPipeline("./shaders/tessVert.vert.spv","./shaders/tessCtrl.tesc.spv",
         "./shaders/tessEval.tese.spv","./shaders/tessFrag.frag.spv")));
     uniformBuffers = createUniformBuffers<CameraUBO>();
@@ -633,6 +633,13 @@ VkPipeline VulkanRenderer::CreateGraphicsPipeline(const char* vertFile, const ch
     range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 
 
+
+
+    VkPipelineTessellationStateCreateInfo tessellation{};
+	tessellation.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
+	tessellation.patchControlPoints = 3;
+
+
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipelineLayoutInfo.setLayoutCount = 1;
@@ -655,6 +662,7 @@ VkPipeline VulkanRenderer::CreateGraphicsPipeline(const char* vertFile, const ch
     pipelineInfo.pMultisampleState = &multisampling;
     pipelineInfo.pDepthStencilState = &depthStencil;
     pipelineInfo.pColorBlendState = &colorBlending;
+    pipelineInfo.pTessellationState = &tessellation;
 
     pipelineInfo.layout = pipelineLayout;
     pipelineInfo.renderPass = renderPass;

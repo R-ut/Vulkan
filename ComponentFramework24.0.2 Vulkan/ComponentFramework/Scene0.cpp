@@ -72,7 +72,7 @@ void Scene0::Render() const {
 	case RendererType::VULKAN:
 		VulkanRenderer* vRenderer;
 		vRenderer = dynamic_cast<VulkanRenderer*>(renderer);
-		vRenderer->SetCameraUBO(camera->GetProjectionMatrix(), camera->GetViewMatrix());
+		vRenderer->SetCameraUBO(camera->GetProjectionMatrix() * camera->GetViewMatrix() * mariosModelMatrix2, camera->GetViewMatrix());
 		for (int i = 0; i < 3; i++) {
 			Vec4 lightPos[] = { Vec4(5.0f, 0.0f, 0.0f,0.0f),Vec4(0.0f, 0.0f, 10.0f,0.0f), Vec4(-5.0f, 0.0f, 0.0f,0.0f) };
 			Vec4 diffuse[] = { Vec4(1.0f, 0.0f, 0.0f,0.0f), Vec4(0.0f, 0.6f, 0.0f,0.0f), Vec4(0.0f, 0.0f, 1.0f,0.0f) };
