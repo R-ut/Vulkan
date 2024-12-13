@@ -29,8 +29,8 @@ bool Scene0::OnCreate() {
 
 		SDL_GetWindowSize(dynamic_cast<VulkanRenderer*>(renderer)->GetWindow(), &width, &height);
 		aspectRatio = static_cast<float>(width) / static_cast<float>(height);
-		camera->Perspective(45.0f, aspectRatio, 0.5f, 20.0f);
-		camera->LookAt(Vec3(0.0f, 0.0f, 5.0f), Vec3(0.0f, 0.0f, 0.0f), Vec3(0.0f, 1.0f, 0.0f));
+		camera->Perspective(45.0f, aspectRatio, 0.0f, 1000.0f);
+		camera->LookAt(Vec3(0.0f, 0.0f, 5.0f), Vec3(0.0f, 0.0f, 0.0f), Vec3(0.0f, 5.0f, 0.0f));
 		
 
 		
@@ -49,7 +49,7 @@ void Scene0::HandleEvents(const SDL_Event& sdlEvent) {
 		case SDL_WINDOWEVENT_SIZE_CHANGED:
 			printf("size changed %d %d\n", sdlEvent.window.data1, sdlEvent.window.data2);
 			float aspectRatio = static_cast<float>(sdlEvent.window.data1) / static_cast<float>(sdlEvent.window.data2);
-			camera->Perspective(45.0f, aspectRatio, 0.5f, 20.0f);
+			camera->Perspective(45.0f, aspectRatio, 0.5f, 1000.0f);
 			if (renderer->getRendererType() == RendererType::VULKAN) {
 				dynamic_cast<VulkanRenderer*>(renderer)->RecreateSwapChain();
 			}
@@ -72,7 +72,7 @@ void Scene0::Render() const {
 	case RendererType::VULKAN:
 		VulkanRenderer* vRenderer;
 		vRenderer = dynamic_cast<VulkanRenderer*>(renderer);
-		vRenderer->SetCameraUBO(camera->GetProjectionMatrix() * camera->GetViewMatrix() * mariosModelMatrix2, camera->GetViewMatrix());
+		vRenderer->SetCameraUBO(camera->GetProjectionMatrix(), camera->GetViewMatrix());
 		for (int i = 0; i < 3; i++) {
 			Vec4 lightPos[] = { Vec4(5.0f, 0.0f, 0.0f,0.0f),Vec4(0.0f, 0.0f, 10.0f,0.0f), Vec4(-5.0f, 0.0f, 0.0f,0.0f) };
 			Vec4 diffuse[] = { Vec4(1.0f, 0.0f, 0.0f,0.0f), Vec4(0.0f, 0.6f, 0.0f,0.0f), Vec4(0.0f, 0.0f, 1.0f,0.0f) };
@@ -82,7 +82,7 @@ void Scene0::Render() const {
 			// Set model matrix for first Mario
 
 		}
-		vRenderer->SetPushConstModelMatrix(mariosModelMatrix, 0); // Texture index 0
+		vRenderer->SetPushConstModelMatrix(mariosModelMatrix * MMath::translate(Vec3(0.0f, 0.0f, 1.2f)) , 0); // Texture index 0
 
 		// Set model matrix for second Mario (translated along the X-axis to make it visible)
 		vRenderer->SetPushConstModelMatrix(mariosModelMatrix2 * MMath::translate(Vec3(2.0f, 0.0f, 0.0f)), 1); // Texture index 1

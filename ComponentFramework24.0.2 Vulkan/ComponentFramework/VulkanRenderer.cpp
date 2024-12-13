@@ -46,8 +46,8 @@ bool VulkanRenderer::OnCreate() {
     createFramebuffers();
     textures.push_back(Create2DTextureImage("./textures/mario_mime.png"));
     textures.push_back(Create2DTextureImage("./textures/mario_fire.png"));
-    indexedVertexBuffers.push_back(LoadModelIndexed("./meshes/mario.obj"));
-    indexedVertexBuffers.push_back(LoadModelIndexed("./meshes/mario.obj"));
+    indexedVertexBuffers.push_back(LoadModelIndexed("./meshes/Mario.obj"));
+    indexedVertexBuffers.push_back(LoadModelIndexed("./meshes/Mario.obj"));
     graphicsPipelines.push_back((CreateGraphicsPipeline("./shaders/tessVert.vert.spv","./shaders/tessCtrl.tesc.spv",
         "./shaders/tessEval.tese.spv","./shaders/tessFrag.frag.spv")));
     uniformBuffers = createUniformBuffers<CameraUBO>();
@@ -358,9 +358,20 @@ void VulkanRenderer::createLogicalDevice() {
         queueCreateInfos.push_back(queueCreateInfo);
     }
 
+
+    // Check for tessellation shader support
+    VkPhysicalDeviceFeatures supportedFeatures;
+    vkGetPhysicalDeviceFeatures(physicalDevice, &supportedFeatures);
+
+    if (!supportedFeatures.tessellationShader) {
+        throw std::runtime_error("Tessellation shaders are not supported by the selected GPU!");
+    }
+
+
     VkPhysicalDeviceFeatures deviceFeatures{};
     deviceFeatures.samplerAnisotropy = VK_TRUE;
     deviceFeatures.fillModeNonSolid = VK_TRUE; // Enable non-solid fill modes(Not rut's work)
+    deviceFeatures.tessellationShader = VK_TRUE;
 
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -594,7 +605,7 @@ VkPipeline VulkanRenderer::CreateGraphicsPipeline(const char* vertFile, const ch
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
     rasterizer.polygonMode = VK_POLYGON_MODE_LINE;  //Changed fill to line for wireframe
     rasterizer.lineWidth = 1.0f;
-    rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+    rasterizer.cullMode = VK_CULL_MODE_NONE;
     rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizer.depthBiasEnable = VK_FALSE;
 
@@ -1065,7 +1076,7 @@ VkDescriptorPool VulkanRenderer::createDescriptorPool() {
     poolSizes[1].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     poolSizes[1].descriptorCount = static_cast<uint32_t>(swapChainImages.size());
     poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    poolSizes[2].descriptorCount = static_cast<uint32_t>(swapChainImages.size() * 2);
+    poolSizes[2].descriptorCount = static_cast<uint32_t>(swapChainImages.size()) * 2;
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -1275,10 +1286,7 @@ void VulkanRenderer::createCommandBuffers() {
 void VulkanRenderer::RecordCommandBuffer() {
     vkDeviceWaitIdle(device); //works for today maynot be the best way
 
-    for (int i = 0; i < 2; i++) {
-        std::cout << "Model Matrix for index " << i << ": " << std::endl;
-        pushconstant[i].modelMatrix.print();
-    }
+   
     for (size_t i = 0; i < commandBuffers.size(); i++) {
         VkCommandBufferBeginInfo beginInfo{};
         beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -1311,6 +1319,9 @@ void VulkanRenderer::RecordCommandBuffer() {
             vkCmdBindVertexBuffers(commandBuffers[i], 0, 1, &indexedVertexBuffers[j].vertBufferID, offsets);
             vkCmdBindIndexBuffer(commandBuffers[i], indexedVertexBuffers[j].indexBufferID, 0, VK_INDEX_TYPE_UINT32);
             vkCmdBindDescriptorSets(commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1, &descriptorSets[i], 0, nullptr);
+
+            std::cout << "Model Matrix for index " << i << ": " << std::endl;
+            pushconstant[j].modelMatrix.print(); // Check if z is reasonable
 
             vkCmdPushConstants(commandBuffers[i], pipelineLayout,
                 VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
